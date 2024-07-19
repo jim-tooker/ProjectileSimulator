@@ -251,10 +251,12 @@ class ProjectileSimulator:
             print()
             print(f'Max possible distance @ 45°: {self.max_possible_dist:.2f} m')
             print(f'Max possible height @ 90°: {self.max_possible_height:.2f} m')
+            print()
             print(f'Max height: {self.max_height:.2f} m')
             print(f'Time to max height: {self.time_to_max_height:.2f} s')
             print(f'Distance at max height: {self.dist_at_max_height:.2f} m')
-            print(f'Total flight time: {self.total_flight_time:.2f} m')
+            print()
+            print(f'Total flight time: {self.total_flight_time:.2f} s')
             print(f'Total distance: {self.total_distance:.2f} m')
             print()
 
