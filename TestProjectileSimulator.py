@@ -141,3 +141,15 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(5.70, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(403.39, rel=TestProjectileSimulator.tolerance)
 
+    def test_launch_angle_0(self):
+        speed = 20
+        angle = 0
+        with pytest.raises(ValueError):
+            ProjectileSimulator(speed, angle)
+
+    def test_launch_angle_91(self):
+        speed = 20
+        angle = 91
+        with pytest.raises(ValueError):
+            ProjectileSimulator(speed, angle)
+
