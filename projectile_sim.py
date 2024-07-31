@@ -44,7 +44,7 @@ class ProjectileSimulator:
 
         Raises:
             ValueError: If the launch angle is not greater than 0 and less than or 
-                        equal to 90 degrees.
+                        equal to 90°.
         """
         self.speed: float = speed
         self.launch_angle: float = launch_angle

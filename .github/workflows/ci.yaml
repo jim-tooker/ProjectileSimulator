@@ -29,4 +29,4 @@ jobs:
         pip install vpython readchar pytest
     - name: Test
       run: |
-        pytest TestProjectileSimulator.py
+        pytest test_projectile_sim.py

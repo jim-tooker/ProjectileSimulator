@@ -1,1 +1,1 @@
-pdoc -f --html -o docs ProjectileSimulator
+pdoc -f --html -o docs projectile_sim

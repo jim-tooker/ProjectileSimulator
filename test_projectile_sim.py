@@ -1,5 +1,5 @@
 import pytest
-from ProjectileSimulator import ProjectileSimulator
+from projectile_sim import ProjectileSimulator
 
 class TestProjectileSimulator:
     ProjectileSimulator.disable_gui(True)
