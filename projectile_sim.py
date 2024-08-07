@@ -98,7 +98,7 @@ class ProjectileSimulator:
         if ProjectileSimulator._no_gui is False:
             # We don't import vp_services until needed, because importing it will start
             # the server, if not started already.
-            import vpython.no_notebook as vp_services
+            import vpython.no_notebook as vp_services  # type: ignore[import-untyped]
             vp_services.stop_server()
 
     @classmethod

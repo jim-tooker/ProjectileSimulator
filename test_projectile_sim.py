@@ -5,7 +5,7 @@ class TestProjectileSimulator:
     ProjectileSimulator.disable_gui(True)
     tolerance = 0.01
 
-    def test_20_45(self):
+    def test_20_45(self) -> None:
         speed = 20
         angle = 45
         sim = ProjectileSimulator(speed, angle)
@@ -20,7 +20,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(2.89, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(40.82, rel=TestProjectileSimulator.tolerance)
 
-    def test_20_1(self):
+    def test_20_1(self) -> None:
         speed = 20
         angle = 1
         sim = ProjectileSimulator(speed, angle)
@@ -35,7 +35,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(0.0712, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(1.42, rel=TestProjectileSimulator.tolerance)
 
-    def test_20_5(self):
+    def test_20_5(self) -> None:
         speed = 20
         angle = 5
         sim = ProjectileSimulator(speed, angle)
@@ -50,7 +50,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(0.3558, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(7.09, rel=TestProjectileSimulator.tolerance)
 
-    def test_20_90(self):
+    def test_20_90(self) -> None:
         speed = 20
         angle = 90
         sim = ProjectileSimulator(speed, angle)
@@ -65,7 +65,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(4.08, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(0.0, rel=TestProjectileSimulator.tolerance)
 
-    def test_20_88(self):
+    def test_20_88(self) -> None:
         speed = 20
         angle = 88
         sim = ProjectileSimulator(speed, angle)
@@ -80,7 +80,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(4.08, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(2.85, rel=TestProjectileSimulator.tolerance)
 
-    def test_1_45(self):
+    def test_1_45(self) -> None:
         speed = 1
         angle = 45
         sim = ProjectileSimulator(speed, angle)
@@ -95,7 +95,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(0.1443, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(0.1020, rel=TestProjectileSimulator.tolerance)
 
-    def test_5_45(self):
+    def test_5_45(self) -> None:
         speed = 5
         angle = 45
         sim = ProjectileSimulator(speed, angle)
@@ -110,7 +110,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(0.72, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(2.55, rel=TestProjectileSimulator.tolerance)
 
-    def test_100_45(self):
+    def test_100_45(self) -> None:
         speed = 100
         angle = 45
         sim = ProjectileSimulator(speed, angle)
@@ -125,7 +125,7 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(14.43, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(1020.41, rel=TestProjectileSimulator.tolerance)
 
-    def test_100_45_Jupiter(self):
+    def test_100_45_Jupiter(self) -> None:
         speed = 100
         angle = 45
         gravity = 24.79  # Jupiter gravity
@@ -141,13 +141,13 @@ class TestProjectileSimulator:
         assert sim.total_flight_time == pytest.approx(5.70, rel=TestProjectileSimulator.tolerance)
         assert sim.total_distance == pytest.approx(403.39, rel=TestProjectileSimulator.tolerance)
 
-    def test_launch_angle_0(self):
+    def test_launch_angle_0(self) -> None:
         speed = 20
         angle = 0
         with pytest.raises(ValueError):
             ProjectileSimulator(speed, angle)
 
-    def test_launch_angle_91(self):
+    def test_launch_angle_91(self) -> None:
         speed = 20
         angle = 91
         with pytest.raises(ValueError):
