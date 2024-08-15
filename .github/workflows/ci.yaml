@@ -38,4 +38,5 @@ jobs:
 
     - name: Test
       run: |
+        export PYTHONPATH=$PYTHONPATH:.:/home/runner/work/projectilesim
         pytest tests/test_projectile_sim.py

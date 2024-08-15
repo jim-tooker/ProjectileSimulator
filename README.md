@@ -5,7 +5,7 @@
 * Plots the projectile's path.
 * Outputs physics results (No air resistance in calculations).
 
-## test_projectile_sim.py
+## tests/test_projectile_sim.py
 * Test cases for ProjectileSimulator
 
 ## Documentation
