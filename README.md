@@ -9,4 +9,4 @@
 * Test cases for ProjectileSimulator
 
 ## Documentation
-For detailed API documentation, see [API Documentation](https://jim-tooker.github.io/ProjectileSimulator/docs/projectile_sim.html).
+For detailed API documentation, see [API Documentation](https://jim-tooker.github.io/projectilesim/docs/projectile_sim.html).
