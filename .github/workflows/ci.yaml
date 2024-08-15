@@ -38,4 +38,4 @@ jobs:
 
     - name: Test
       run: |
-        pytest test_projectile_sim.py
+        pytest tests/test_projectile_sim.py
