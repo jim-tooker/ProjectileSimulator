@@ -247,7 +247,7 @@ class ProjectileSimulator:
 
         self._graph = vp.graph(
             title='<i>Projectile Motion Simulator</i>\n' +
-                  f'Initial Speed: {self.speed:.3f} m/s,  Launch Angle: {self.angle:.3f}°\n' +
+                  f'Initial Speed: {self.speed:.1f} m/s,  Launch Angle: {self.angle:.1f}°\n' +
                   f'Environment: {str(self.environment.type)} ' +
                   f'(Gravity: {self.environment.gravity:.3f} m/s²,  ' +
                   f'Air Density: {self.environment.air_density:.3f} kg/m³)\n' +
@@ -297,14 +297,14 @@ class ProjectileSimulator:
 
         self._labels['max_possible_flight_time_45'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                                text=f'Max Possible Flight Time (no air) @ 45°: {
-                                                               self.max_possible_flight_time/math.sqrt(2):.3f} m',
+                                                               self.max_possible_flight_time/math.sqrt(2):.3f} s',
                                                                height=16, align='left', box=False)
 
         line_number -= 1
 
         self._labels['max_possible_flight_time_90'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                                text=f'Max Possible Flight Time (no air) @ 90°: {
-                                                               self.max_possible_flight_time:.3f} m',
+                                                               self.max_possible_flight_time:.3f} s',
                                                                height=16, align='left', box=False)
 
         line_number -= 2
@@ -504,7 +504,7 @@ class ProjectileSimulator:
         if ProjectileSimulator._no_gui is True:
             print()
             print('Input Parameters:')
-            print(f'  Initial Speed: {self.speed:.3f} m/s, Launch Angle: {self.angle:.3f}°')
+            print(f'  Initial Speed: {self.speed:.1f} m/s, Launch Angle: {self.angle:.1f}°')
             print(f'  Environment: {str(self.environment.type)}', end=' ')
             print(f'(Gravity: {self.environment.gravity:.3f} m/s²,', end=' ')
             print(f'Air Density: {self.environment.air_density:.3f} kg/m³)')
@@ -515,8 +515,8 @@ class ProjectileSimulator:
             print(f'Max possible distance @ 45°: {self.max_possible_dist:.3f} m')
             print(f'Max possible height @ 45°: {self.max_possible_height/2:.3f} m')
             print(f'Max possible height @ 90°: {self.max_possible_height:.3f} m')
-            print(f'Max possible flight time @ 45°: {self.max_possible_flight_time/math.sqrt(2):.3f} m')
-            print(f'Max possible flight time @ 90°: {self.max_possible_flight_time:.3f} m')
+            print(f'Max possible flight time @ 45°: {self.max_possible_flight_time/math.sqrt(2):.3f} s')
+            print(f'Max possible flight time @ 90°: {self.max_possible_flight_time:.3f} s')
             print()
             print(f'Max height: {self.max_height:.3f} m')
             print(f'Time to max height: {self.time_to_max_height:.3f} s')
