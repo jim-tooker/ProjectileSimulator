@@ -352,11 +352,13 @@ class ProjectileSimulator:
         speed = math.sqrt(vx**2 + vy**2)
 
         # Calculate drag force
-        drag_force = 0.5 * self.environment.air_density * speed**2 * \
-                     DRAG_COEFFICIENT_SPHERE * self.projectile.area
+        drag_force = 0.5 * self.environment.air_density * speed**2 * DRAG_COEFFICIENT_SPHERE * self.projectile.area
 
         # Calculate drag acceleration
-        drag_acc = drag_force / self.projectile.mass
+        if self.projectile.mass > 0:
+            drag_acc = drag_force / self.projectile.mass
+        else:
+            drag_acc = 0
 
         # Calculate x and y components of acceleration
         ax = -drag_acc * vx / speed
