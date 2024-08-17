@@ -5,6 +5,7 @@ the trajectory of a projectile given initial conditions.
 """
 
 import argparse
+from enum import Enum, auto
 from dataclasses import dataclass, field
 import math
 from typing import Dict, List, Tuple, Optional
@@ -19,42 +20,67 @@ DRAG_COEFFICIENT_SPHERE = 0.47
 N_DIGITS = 6   # num of digits to round floats for display
 
 
+class EnvironmentType(Enum):
+    EARTH = auto()
+    EARTH_NO_AIR = auto()
+    MARS = auto()
+    MOON = auto()
+    VENUS = auto()
+    JUPITER = auto()
+    CUSTOM = auto()
+
+    def __str__(self):
+        return self.name.replace('_', ' ').title()
+
+
 @dataclass
 class Environment:
     """
     Dataclass to hold the Environment information.
 
     Attributes:
-        name (str): The name of the environment.
+        type (EnvironmentType): The type of the environment.
         gravity (float): The gravity of the environment (m/s^2).
         air_density (float): The air density of the environment (kg/m^3).
         display_name (str): Formatted name of the environment.
     """
-    name: str
+    type: EnvironmentType
     gravity: float   # m/s^2
     air_density: float  # kg/m^3
     display_name: str = field(init=False)
 
     def __post_init__(self):
-        self.display_name = f'{self.name:<15}'
+        self.display_name = f'{str(self.type):<15}'
 
     @classmethod
-    def create_dict(cls) -> Dict[str, 'Environment']:
+    def create_dict(cls) -> Dict[EnvironmentType, 'Environment']:
         """
         Creates a Dict of the "canned" environments available.
         """
         environments: List[Environment] = [
-            cls(name='Earth', gravity=9.81, air_density=1.225),
-            cls(name='Earth (No Air)', gravity=9.81, air_density=0),
-            cls(name='Mars', gravity=3.72, air_density=0.02),
-            cls(name='Moon', gravity=1.62, air_density=0),
-            cls(name='Venus', gravity=8.87, air_density=65),
-            cls(name='Jupiter', gravity=24.79, air_density=0.16),
+            cls(type=EnvironmentType.EARTH, gravity=9.81, air_density=1.225),
+            cls(type=EnvironmentType.EARTH_NO_AIR, gravity=9.81, air_density=0),
+            cls(type=EnvironmentType.MARS, gravity=3.72, air_density=0.02),
+            cls(type=EnvironmentType.MOON, gravity=1.62, air_density=0),
+            cls(type=EnvironmentType.VENUS, gravity=8.87, air_density=65),
+            cls(type=EnvironmentType.JUPITER, gravity=24.79, air_density=0.16),
         ]
-        return {env.name: env for env in environments}
+        return {env.type: env for env in environments}
 
 ENVIRONMENTS = Environment.create_dict()
 
+
+class ProjectileType(Enum):
+    GOLF_BALL = auto()
+    PING_PONG_BALL = auto()
+    TENNIS_BALL = auto()
+    BASEBALL = auto()
+    BOWLING_BALL = auto()
+    SHOT_PUT = auto()
+    CUSTOM = auto()
+
+    def __str__(self):
+        return self.name.replace('_', ' ').title()
 
 @dataclass
 class Projectile:
@@ -62,36 +88,36 @@ class Projectile:
     Dataclass to hold the Projectile information.
 
     Attributes:
-        name (str): The name of the projectile.
-        mass (float): The mass of the projectile (m).
+        type (ProjectileType): The type of the projectile.
+        mass (float): The mass of the projectile (kg).
         radius (float): The radius of the projectile (m).
         area (float): The area of the projectile (m^2).
         display_name (str): Formatted name of the projectile.
     """
-    name: str
-    mass: float  # m
+    type: ProjectileType
+    mass: float  # kg
     radius: float  # m
     area: float = field(init=False)  # m^2
     display_name: str = field(init=False)
 
     def __post_init__(self):
-        self.display_name = f'{self.name:<15}'
+        self.display_name = f'{str(self.type):<15}'
         self.area = math.pi * self.radius**2
 
     @classmethod
-    def create_dict(cls) -> Dict[str, 'Projectile']:
+    def create_dict(cls) -> Dict[ProjectileType, 'Projectile']:
         """
         Creates a Dict of the "canned" projectiles available.
         """
         projectiles: List[Projectile] = [
-            cls(name='Golf Ball', mass=0.046, radius=0.0213),
-            cls(name='Ping Pong Ball', mass=0.0027, radius=0.02),
-            cls(name='Tennis Ball', mass=0.058, radius=0.0337),
-            cls(name='Baseball', mass=0.145, radius=0.0373),
-            cls(name='Bowling Ball', mass=6, radius=0.108),
-            cls(name='Shot Put', mass=7.26, radius=0.0625),
+            cls(type=ProjectileType.GOLF_BALL, mass=0.046, radius=0.0213),
+            cls(type=ProjectileType.PING_PONG_BALL, mass=0.0027, radius=0.02),
+            cls(type=ProjectileType.TENNIS_BALL, mass=0.058, radius=0.0337),
+            cls(type=ProjectileType.BASEBALL, mass=0.145, radius=0.0373),
+            cls(type=ProjectileType.BOWLING_BALL, mass=6, radius=0.108),
+            cls(type=ProjectileType.SHOT_PUT, mass=7.26, radius=0.0625),
         ]
-        return {proj.name: proj for proj in projectiles}
+        return {proj.type: proj for proj in projectiles}
 
 PROJECTILES = Projectile.create_dict()
 
@@ -104,7 +130,7 @@ class ProjectileSimulator:
         environment (Environment): The type of environment for simulation.
         projectile (Projectile): The type of projectile for simulation.
         speed (float): The initial speed of the projectile (m/s).
-        launch_angle (float): The launch angle (degrees).
+        angle (float): The launch angle (degrees).
         angle_rad (float): The launch angle (radians).
         v0x (float): The velocity component in the x direction (m)
         v0y (float): The velocity component in the y direction (m)
@@ -128,13 +154,13 @@ class ProjectileSimulator:
                  environment: Environment,
                  projectile: Projectile,
                  speed: float,
-                 launch_angle: float):
+                 angle: float):
         """
         Args:
             environment (Environment): The type of environment for simulation.
             projectile (Projectile): The type of projectile for simulation.
             speed (float): The initial speed of the projectile.
-            launch_angle (float): The angle of launch.
+            angle (float): The angle of launch.
 
         Raises:
             ValueError: If the launch angle is not > 0° and <= 90°.
@@ -142,13 +168,13 @@ class ProjectileSimulator:
         self.environment: Environment = environment
         self.projectile: Projectile = projectile
         self.speed: float = speed
-        self.launch_angle: float = launch_angle
+        self.angle: float = angle
 
-        if self.launch_angle <= 0 or self.launch_angle > 90:
+        if self.angle <= 0 or self.angle > 90:
             raise ValueError("Launch angle must be > 0° and <= 90°.")
 
         # Convert angle to radians for trigonometric calculations
-        self.angle_rad: float = math.radians(self.launch_angle)
+        self.angle_rad: float = math.radians(self.angle)
 
         # Calculate initial velocity components
         self.v0x: float = self.speed * math.cos(self.angle_rad)
@@ -221,13 +247,13 @@ class ProjectileSimulator:
 
         self._graph = vp.graph(
             title='<i>Projectile Motion Simulator</i>\n' +
-                  f'Initial Speed: {self.speed:.3g} m/s,  Launch Angle: {self.launch_angle:.3g}°\n' +
-                  f'Environment: {self.environment.name} ' +
-                  f'(Gravity: {self.environment.gravity:.3g} m/s²,  ' +
-                  f'Air Density: {self.environment.air_density:.3g} kg/m³)\n' +
-                  f'Projectile: {self.projectile.name} ' +
-                  f'(Mass: {self.projectile.mass:.3g} kg,  ' +
-                  f'Surface Area: {self.projectile.area:.3g} m²)',
+                  f'Initial Speed: {self.speed:.3f} m/s,  Launch Angle: {self.angle:.3f}°\n' +
+                  f'Environment: {str(self.environment.type)} ' +
+                  f'(Gravity: {self.environment.gravity:.3f} m/s²,  ' +
+                  f'Air Density: {self.environment.air_density:.3f} kg/m³)\n' +
+                  f'Projectile: {str(self.projectile.type)} ' +
+                  f'(Mass: {self.projectile.mass:.3f} kg,  ' +
+                  f'Surface Area: {self.projectile.area:.3f} m²)',
             xtitle='Distance (m)', ytitle='Height (m)',
             xmin=0, xmax=self.max_possible_dist * scale_factor,
             ymin=0, ymax=self.max_possible_height * scale_factor,
@@ -250,35 +276,35 @@ class ProjectileSimulator:
         ### Create labels for various trajectory parameters  ###
         self._labels['max_possible_dist'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                      text=f'Max Possible Distance (no air) @ 45°: {
-                                                     self.max_possible_dist:.3g} m',
+                                                     self.max_possible_dist:.3f} m',
                                                      height=16, align='left', box=False)
 
         line_number -= 1
 
         self._labels['max_possible_height_45'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                           text=f'Max Possible Height (no air) @ 45°: {
-                                                          self.max_possible_height/2:.3g} m',
+                                                          self.max_possible_height/2:.3f} m',
                                                           height=16, align='left', box=False)
 
         line_number -= 1
 
         self._labels['max_possible_height_90'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                           text=f'Max Possible Height (no air) @ 90°: {
-                                                          self.max_possible_height:.3g} m',
+                                                          self.max_possible_height:.3f} m',
                                                           height=16, align='left', box=False)
 
         line_number -= 1
 
         self._labels['max_possible_flight_time_45'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                                text=f'Max Possible Flight Time (no air) @ 45°: {
-                                                               self.max_possible_flight_time/math.sqrt(2):.3g} m',
+                                                               self.max_possible_flight_time/math.sqrt(2):.3f} m',
                                                                height=16, align='left', box=False)
 
         line_number -= 1
 
         self._labels['max_possible_flight_time_90'] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                                                text=f'Max Possible Flight Time (no air) @ 90°: {
-                                                               self.max_possible_flight_time:.3g} m',
+                                                               self.max_possible_flight_time:.3f} m',
                                                                height=16, align='left', box=False)
 
         line_number -= 2
@@ -441,20 +467,20 @@ class ProjectileSimulator:
             self._plot_points(x, y)
 
             # Update flight time label
-            self._update_label('flight_time', f'Flight Time: {t:.3g} s')
+            self._update_label('flight_time', f'Flight Time: {t:.3f} s')
 
             # Check if max height is reached and update labels accordingly
             if max_height_reached is False:
                 if y >= y_prev:
-                    self._update_label('height', f'Height: {y:.3g} m')
+                    self._update_label('height', f'Height: {y:.3f} m')
                 else:
                     max_height_reached = True
                     self.max_height = round(y_prev, N_DIGITS)
                     self.time_to_max_height = t - dt
                     self.dist_at_max_height = round(x_prev, N_DIGITS)
-                    self._update_label('height', f'Max Height: {self.max_height:.3g} m')
-                    self._update_label('time_to_max_height', f'Time to Max Height: {self.time_to_max_height:.3g} s')
-                    self._update_label('dist_at_max_height', f'Distance at Max Height: {self.dist_at_max_height:.3g} m')
+                    self._update_label('height', f'Max Height: {self.max_height:.3f} m')
+                    self._update_label('time_to_max_height', f'Time to Max Height: {self.time_to_max_height:.3f} s')
+                    self._update_label('dist_at_max_height', f'Distance at Max Height: {self.dist_at_max_height:.3f} m')
 
             # Store current x and y
             x_prev = x
@@ -471,33 +497,33 @@ class ProjectileSimulator:
         self.total_flight_time = t - dt
 
         # Update final labels
-        self._update_label('flight_time', f'Total Flight Time: {self.total_flight_time:.3g} s')
-        self._update_label('total_dist', f'Total Distance: {self.total_distance:.3g} m')
+        self._update_label('flight_time', f'Total Flight Time: {self.total_flight_time:.3f} s')
+        self._update_label('total_dist', f'Total Distance: {self.total_distance:.3f} m')
 
         # Print results if no GUI
         if ProjectileSimulator._no_gui is True:
             print()
             print('Input Parameters:')
-            print(f'  Initial Speed: {self.speed:.3g} m/s, Launch Angle: {self.launch_angle:.3g}°')
-            print(f'  Environment: {self.environment.name}', end=' ')
-            print(f'(Gravity: {self.environment.gravity:.3g} m/s²,', end=' ')
-            print(f'Air Density: {self.environment.air_density:.3g} kg/m³)')
-            print(f'  Projectile: {self.projectile.name}', end=' ')
-            print(f'(Mass: {self.projectile.mass:.3g} kg,', end=' ')
-            print(f'Surface Area: {self.projectile.area:.3g} m²)')
+            print(f'  Initial Speed: {self.speed:.3f} m/s, Launch Angle: {self.angle:.3f}°')
+            print(f'  Environment: {str(self.environment.type)}', end=' ')
+            print(f'(Gravity: {self.environment.gravity:.3f} m/s²,', end=' ')
+            print(f'Air Density: {self.environment.air_density:.3f} kg/m³)')
+            print(f'  Projectile: {str(self.projectile.type)}', end=' ')
+            print(f'(Mass: {self.projectile.mass:.3f} kg,', end=' ')
+            print(f'Surface Area: {self.projectile.area:.3f} m²)')
             print()
-            print(f'Max possible distance @ 45°: {self.max_possible_dist:.3g} m')
-            print(f'Max possible height @ 45°: {self.max_possible_height/2:.3g} m')
-            print(f'Max possible height @ 90°: {self.max_possible_height:.3g} m')
-            print(f'Max possible flight time @ 45°: {self.max_possible_flight_time/math.sqrt(2):.3g} m')
-            print(f'Max possible flight time @ 90°: {self.max_possible_flight_time:.3g} m')
+            print(f'Max possible distance @ 45°: {self.max_possible_dist:.3f} m')
+            print(f'Max possible height @ 45°: {self.max_possible_height/2:.3f} m')
+            print(f'Max possible height @ 90°: {self.max_possible_height:.3f} m')
+            print(f'Max possible flight time @ 45°: {self.max_possible_flight_time/math.sqrt(2):.3f} m')
+            print(f'Max possible flight time @ 90°: {self.max_possible_flight_time:.3f} m')
             print()
-            print(f'Max height: {self.max_height:.3g} m')
-            print(f'Time to max height: {self.time_to_max_height:.3g} s')
-            print(f'Distance at max height: {self.dist_at_max_height:.3g} m')
+            print(f'Max height: {self.max_height:.3f} m')
+            print(f'Time to max height: {self.time_to_max_height:.3f} s')
+            print(f'Distance at max height: {self.dist_at_max_height:.3f} m')
             print()
-            print(f'Total flight time: {self.total_flight_time:.3g} s')
-            print(f'Total distance: {self.total_distance:.3g} m')
+            print(f'Total flight time: {self.total_flight_time:.3f} s')
+            print(f'Total distance: {self.total_distance:.3f} m')
             print()
 
 
@@ -554,7 +580,7 @@ def main() -> None:
         def _get_environment_choice() -> Environment:
             print("\nSelect an environment:")
             for i, (_, env) in enumerate(ENVIRONMENTS.items()):
-                print(f"[{i+1}] {env.display_name}: (Gravity: {env.gravity:.3g} m/s², Air Density: {env.air_density:.3g} kg/m³)")
+                print(f"[{i+1}] {env.display_name}: (Gravity: {env.gravity:.3f} m/s², Air Density: {env.air_density:.3f} kg/m³)")
             print(f"[{len(ENVIRONMENTS)+1}] Custom")
 
             while True:
@@ -563,10 +589,9 @@ def main() -> None:
                     if 1 <= choice <= len(ENVIRONMENTS):
                         return list(ENVIRONMENTS.values())[choice - 1]
                     elif choice == len(ENVIRONMENTS)+1:
-                        name = "Custom Environment"
                         gravity = _get_float("Enter gravity (m/s²): ")
                         air_density = _get_float("Enter air density (kg/m³): ")
-                        return Environment(name, gravity, air_density)
+                        return Environment(EnvironmentType.CUSTOM, gravity, air_density)
                     else:
                         raise ValueError
                 except ValueError:
@@ -575,7 +600,7 @@ def main() -> None:
         def _get_projectile_choice() -> Projectile:
             print("\nSelect a projectile:")
             for i, (_, proj) in enumerate(PROJECTILES.items()):
-                print(f"[{i+1}] {proj.display_name}: (Mass: {proj.mass:.3g} kg, Radius: {proj.radius:.3g} m)")
+                print(f"[{i+1}] {proj.display_name}: (Mass: {proj.mass:.3f} kg, Radius: {proj.radius:.3f} m)")
             print(f"[{len(PROJECTILES)+1}] Custom")
 
             while True:
@@ -584,10 +609,9 @@ def main() -> None:
                     if 1 <= choice <= len(PROJECTILES):
                         return list(PROJECTILES.values())[choice - 1]
                     elif choice == len(PROJECTILES)+1:
-                        name = "Custom Projectile"
                         mass = _get_float("Enter mass (kg): ")
                         radius = _get_float("Enter radius (m): ")
-                        return Projectile(name, mass, radius)
+                        return Projectile(ProjectileType.CUSTOM, mass, radius)
                     else:
                         raise ValueError
                 except ValueError:
@@ -596,9 +620,9 @@ def main() -> None:
         environment = _get_environment_choice()
         projectile = _get_projectile_choice()
         speed = _get_float("Enter initial speed (m/s): ")
-        launch_angle = _get_float("Enter angle of launch (degrees): ")
+        angle = _get_float("Enter angle of launch (degrees): ")
 
-        return environment, projectile, speed, launch_angle
+        return environment, projectile, speed, angle
 
     parser = argparse.ArgumentParser(description='Projectile Simulator')
     parser.add_argument('--test', action='store_true', help='Run with pre-defined test cases')
@@ -611,22 +635,18 @@ def main() -> None:
     if args.test:
         # Run the simulation
         try:
-            # simulator = ProjectileSimulator(Environment("Earth", gravity=9.81, air_density=1.225),
-            #                                 Projectile("Golf Ball", mass=0.046, radius=0.0213),
-            #                                 speed=10,
-            #                                 launch_angle=45)
-            simulator = ProjectileSimulator(Environment("Earth", gravity=9.81, air_density=1.225),
-                                            Projectile("Ping Pong Ball", mass=0.0027, radius=0.02),
+            simulator = ProjectileSimulator(environment=ENVIRONMENTS[EnvironmentType.EARTH],
+                                            projectile=PROJECTILES[ProjectileType.GOLF_BALL],
                                             speed=10,
-                                            launch_angle=45)
+                                            angle=45)
             simulator.run_simulation()
         except ValueError as e:
             print(e)
     else:
         try:
             # Get user input
-            environment, projectile, speed, launch_angle = _get_user_input()
-            simulator = ProjectileSimulator(environment, projectile, speed, launch_angle)
+            environment, projectile, speed, angle = _get_user_input()
+            simulator = ProjectileSimulator(environment, projectile, speed, angle)
             simulator.run_simulation()
         except ValueError as e:
             print(e)
