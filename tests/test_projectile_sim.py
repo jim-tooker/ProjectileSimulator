@@ -1,6 +1,9 @@
 import pytest
 from projectile_sim import ProjectileSimulator
 
+__author__ = "Jim Tooker"
+
+
 class TestProjectileSimulator:
     ProjectileSimulator.disable_gui(True)
     tolerance = 0.01
