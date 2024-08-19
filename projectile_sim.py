@@ -95,7 +95,8 @@ class ProjectileSimulator:
         self._canvas: Optional[vp.canvas] = None
         self._graph: Optional[vp.graph] = None
         self._curve: Optional[vp.gcurve] = None
-        self._ideal_curve: Optional[vp.gcurve] = None
+        self._curve_no_air45: Optional[vp.gcurve] = None
+        self._curve_no_air: Optional[vp.gcurve] = None
         self._labels: Dict[str, vp.label] = {}
 
     def __del__(self) -> None:
@@ -164,12 +165,16 @@ class ProjectileSimulator:
         # Curve for data plot
         self._curve = vp.gcurve(color=vp.color.red, dot=True, dot_radius=5, dot_color=vp.color.blue)
 
-        # Ideal curve
-        self._ideal_curve = vp.gcurve(color=vp.color.green, dot=True, dot_radius=5, dot_color=vp.color.blue)
+        # Ideal curve at 45°, no air
+        self._curve_no_air45 = vp.gcurve(color=vp.color.green, dot=True, dot_radius=5, dot_color=vp.color.blue)
+
+        # Ideal curve at given angle, no air
+        self._curve_no_air = vp.gcurve(color=vp.color.orange, dot=True, dot_radius=5, dot_color=vp.color.blue)
 
         # Add legend text
         self._curve.label = 'Actual'
-        self._ideal_curve.label = 'Ideal (45°, No air)'
+        self._curve_no_air45.label = '45°, No air'
+        self._curve_no_air.label = f'{self.angle:.1f}°, No air'
 
     def _create_labels(self) -> None:
         """Create labels for displaying simulation information."""
@@ -335,7 +340,7 @@ class ProjectileSimulator:
 
     def _plot_points(self, x: float, y: float) -> None:
         """
-        Plots the x and y points on the curve if GUI is active
+        Plots the x and y points on the curve, if GUI is active
 
         Args:
             x (float): x coordinate
@@ -344,16 +349,27 @@ class ProjectileSimulator:
         if self._curve:
             self._curve.plot(x, y)
 
-    def _plot_ideal_points(self, x: float, y: float) -> None:
+    def _plot_no_air45_points(self, x: float, y: float) -> None:
         """
-        Plots the x and y points on the ideal curve if GUI is active
+        Plots the x and y points on the 45°, no air curve, if GUI is active
 
         Args:
             x (float): x coordinate
             y (float): y coordinate
         """
-        if self._ideal_curve:
-            self._ideal_curve.plot(x, y)
+        if self._curve_no_air45:
+            self._curve_no_air45.plot(x, y)
+
+    def _plot_no_air_curve(self, x: float, y: float) -> None:
+        """
+        Plots the x and y points on the no air curve, if GUI is active.
+
+        Args:
+            x (float): x coordinate
+            y (float): y coordinate
+        """
+        if self._curve_no_air:
+            self._curve_no_air.plot(x, y)
 
     def run_simulation(self) -> None:
         """
@@ -368,14 +384,21 @@ class ProjectileSimulator:
             self._create_labels()
 
         t: float = 0
+
         x: float = 0
         y: float = 0
         ideal_x: float = 0
         ideal_y: float = 0
+        ideal_angle_x: float = 0
+        ideal_angle_y: float = 0
+
         vx: float = self.v0x
         vy: float = self.v0y
         ideal_vx: float = self.speed / math.sqrt(2)
         ideal_vy: float = self.speed / math.sqrt(2)
+        ideal_angle_vx: float = self.v0x
+        ideal_angle_vy: float = self.v0y
+
         dt, rate = self._calculate_dt_and_rate()
         x_prev: float = 0
         y_prev: float = 0
@@ -389,12 +412,19 @@ class ProjectileSimulator:
             # Plot position
             self._plot_points(x, y)
 
-            # Plot ideal position
-            self._plot_ideal_points(ideal_x, ideal_y)
+            # Plot 45° ideal, no air angle points
+            self._plot_no_air45_points(ideal_x, ideal_y)
 
-            # Update ideal points
+            # Update 45° ideal, no air angle points
             ideal_x = ideal_vx * t
             ideal_y = (ideal_vy * t) - (0.5 * self.environment.gravity * t**2)
+
+            # Plot ideal, no air angle points
+            self._plot_no_air_curve(ideal_angle_x, ideal_angle_y)
+
+            # Update ideal, no air angle points
+            ideal_angle_x = ideal_angle_vx * t
+            ideal_angle_y = (ideal_angle_vy * t) - (0.5 * self.environment.gravity * t**2)
 
             # Update flight time label
             self._update_label('flight_time', f'Flight Time: {t:.3f} s')
@@ -426,17 +456,22 @@ class ProjectileSimulator:
         self.total_distance = x_prev
         self.total_flight_time = t - dt
 
-        # Continue to complete ideal curve plot if more time needed
-        while ideal_y >= 0:
+        # Continue to complete ideal curves plot if they are in progress still
+        while ideal_y >= 0 or ideal_angle_y >= 0:
             if ProjectileSimulator._no_gui is False:
                 vp.rate(rate)
 
-            # Plot ideal position
-            self._plot_ideal_points(ideal_x, ideal_y)
+            # Plot ideal position (45°)
+            if ideal_y >= 0:
+                self._plot_no_air45_points(ideal_x, ideal_y)
+                ideal_x = ideal_vx * t
+                ideal_y = (ideal_vy * t) - (0.5 * self.environment.gravity * t**2)
 
-            # Update ideal points
-            ideal_x = ideal_vx * t
-            ideal_y = (ideal_vy * t) - (0.5 * self.environment.gravity * t**2)
+            # Plot ideal angle position
+            if ideal_angle_y >= 0:
+                self._plot_no_air_curve(ideal_angle_x, ideal_angle_y)
+                ideal_angle_x = ideal_angle_vx * t
+                ideal_angle_y = (ideal_angle_vy * t) - (0.5 * self.environment.gravity * t**2)
 
             # Update time
             t += dt
@@ -583,10 +618,10 @@ def main() -> None:
     if args.test:
         # Run the simulation
         try:
-            simulator = ProjectileSimulator(environment=ENVIRONMENTS[EnvironmentType.EARTH],
-                                            projectile=PROJECTILES[ProjectileType.GOLF_BALL],
-                                            speed=10,
-                                            angle=45)
+            simulator = ProjectileSimulator(environment=Environment(EnvironmentType.CUSTOM, gravity=10, air_density=1),
+                                            projectile=Projectile(ProjectileType.CUSTOM, mass=10, radius=1),
+                                            speed=30,
+                                            angle=80)
             simulator.run_simulation()
         except ValueError as e:
             print(e)
