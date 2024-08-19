@@ -1,13 +1,12 @@
 # Projectile Simulator
-### (Module projectilesim)
+### (Package `projectilesim`)
 
-### `projectile_sim.py`
-* Simulates a projectile's flight when launched from the ground at a specified speed, angle, and gravity.
-* Plots the projectile's path.
-* Outputs physics results (No air resistance in calculations).
+This package simulates projectile motion using VPython for visualization. It calculates and displays the trajectory of a projectile in different environments and for different projectile types.
 
-### `tests/test_projectile_sim.py`
-* Test cases for Projectile Simulator
+- ## Modules:
+    * `projectile_sim`: The main module that runs the system. It manages the entire simulation, physics calculations, and plotting.
+    * `environment`: Represents the environment that the projectile will be flying through.  Includes gravity and air density.
+    * `projectile`: Represents the projectile.  Includes mass, radius, and surface area.
 
 ## Documentation
 For detailed API documentation, see [API Documentation](https://jim-tooker.github.io/projectilesim/docs/projectile_sim.html).
