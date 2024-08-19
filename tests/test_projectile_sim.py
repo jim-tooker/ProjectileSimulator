@@ -1,9 +1,12 @@
-import pytest
+"""
+Test harness for ProjectileSimulator
+"""
 from dataclasses import dataclass
-from projectile_sim import  ProjectileSimulator, \
-                            Environment, Projectile, \
-                            ENVIRONMENTS, PROJECTILES, \
-                            EnvironmentType, ProjectileType
+from typing import Union
+import pytest
+from projectile_sim import  ProjectileSimulator
+from environment import Environment, EnvironmentType, ENVIRONMENTS
+from projectile import Projectile, ProjectileType, PROJECTILES
 
 __author__ = 'Jim Tooker'
 
@@ -46,11 +49,17 @@ class CustomInputs:
 
 
 class TestProjectileSimulator:
+    """
+    Class for pytest testing.
+    """
     ProjectileSimulator.disable_gui(True)
     toler = 0.001
 
     @staticmethod
-    def generate_test_id(inputs):
+    def generate_test_id(inputs: Union[CannedInputs, CustomInputs]) -> str:
+        """
+        Generates test ids for each test case.
+        """
         if isinstance(inputs, CannedInputs):
             env = ENVIRONMENTS[inputs.env]
             proj = PROJECTILES[inputs.proj]
@@ -66,6 +75,9 @@ class TestProjectileSimulator:
 
 
     def check_results(self, sim: ProjectileSimulator, expected: ExpectedResults) -> None:
+        """
+        Checks results of ProjectileSimulator run.
+        """
         assert sim.max_possible_dist == pytest.approx(expected.max_possible_dist, abs=self.toler)
         assert sim.max_possible_height == pytest.approx(expected.max_possible_height, abs=self.toler)
         assert sim.max_possible_flight_time == pytest.approx(expected.max_possible_flight_time, abs=self.toler)
@@ -457,8 +469,31 @@ class TestProjectileSimulator:
                         total_flight_time=1.139,
                         total_distance=16.100)
         ),
+        (CannedInputs(EnvironmentType.VENUS, ProjectileType.SHOT_PUT, speed=50, angle=20),
+        ExpectedResults(max_possible_dist=281.849,
+                        max_possible_height=140.924,
+                        max_possible_flight_time=11.274,
+                        max_height=7.625,
+                        time_to_max_height=1.127,
+                        dist_at_max_height=32.867,
+                        total_flight_time=2.559,
+                        total_distance=53.677)
+        ),
+        (CannedInputs(EnvironmentType.VENUS, ProjectileType.SHOT_PUT, speed=100, angle=85),
+        ExpectedResults(max_possible_dist=1127.396,
+                        max_possible_height=563.698,
+                        max_possible_flight_time=22.548,
+                        max_height=64.704,
+                        time_to_max_height=2.864,
+                        dist_at_max_height=7.798,
+                        total_flight_time=7.779,
+                        total_distance=12.286)
+        ),
     ], ids=generate_test_id)
     def test_canned(self, inputs: CannedInputs, expected: ExpectedResults) -> None:
+        """
+        Runs the canned Environment and Projectile tests.
+        """
         environment = ENVIRONMENTS[inputs.env]
         projectile = PROJECTILES[inputs.proj]
         sim = ProjectileSimulator(environment, projectile, inputs.speed, inputs.angle)
@@ -480,8 +515,24 @@ class TestProjectileSimulator:
                          total_flight_time=1.139,
                          total_distance=16.109)
         ),
+        (CustomInputs(Environment(EnvironmentType.CUSTOM, gravity=100, air_density=50),
+                      Projectile(ProjectileType.CUSTOM, mass=40, radius=0.2),
+                      speed=200,
+                      angle=20),
+        ExpectedResults(max_possible_dist=400.000,
+                        max_possible_height=200.000,
+                        max_possible_flight_time=4.000,
+                        max_height=7.622,
+                        time_to_max_height=0.316,
+                        dist_at_max_height=30.750,
+                        total_flight_time=0.752,
+                        total_distance=48.202)
+        ),
     ], ids=generate_test_id)
-    def test_custom(self, inputs, expected):
+    def test_custom(self, inputs: CustomInputs, expected: ExpectedResults) -> None:
+        """
+        Runs the custom Environment and Projectile tests.
+        """
         environment = inputs.env
         projectile = inputs.proj
         sim = ProjectileSimulator(environment, projectile, inputs.speed, inputs.angle)
@@ -490,6 +541,9 @@ class TestProjectileSimulator:
 
 
     def test_launch_angle_0(self) -> None:
+        """
+        Tests too low of launch angle.
+        """
         with pytest.raises(ValueError):
             ProjectileSimulator(environment=ENVIRONMENTS[EnvironmentType.EARTH],
                                 projectile=PROJECTILES[ProjectileType.GOLF_BALL],
@@ -497,6 +551,9 @@ class TestProjectileSimulator:
                                 angle=0)
 
     def test_launch_angle_91(self) -> None:
+        """
+        Tests too high of launch angle.
+        """
         with pytest.raises(ValueError):
             ProjectileSimulator(environment=ENVIRONMENTS[EnvironmentType.EARTH],
                                 projectile=PROJECTILES[ProjectileType.GOLF_BALL],

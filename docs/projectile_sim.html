@@ -60,11 +60,22 @@ simulation runs without a graphical user interface (GUI).</p>
 <ul>
 <li>If not using predefined test parameters, the user is prompted to enter:
 <ul>
+<li>The Environment (choose from canned Environments, or Custom)
+<ul>
+<li>If a Custom Environment is chosen, enter the gravity (m/s²) and air density (kg/m³)
+</li>
+</ul>
+</li>
+<li>The Projectile (choose from canned Projectiles, or Custom)
+<ul>
+<li>If a Custom Projectile is chosen, enter the mass (kg) and radius (m)
+</li>
+</ul>
+</li>
 <li>The initial speed of the projectile (m/s)
 </li>
 <li>The angle of launch (degrees)
 </li>
-<li>Optional: The value of gravity (m/s^2) Defaults to 9.8</li>
 </ul>
 </li>
 </ul>
@@ -87,18 +98,20 @@ simulation runs without a graphical user interface (GUI).</p>
 <dl>
 <dt id="projectile_sim.ProjectileSimulator"><code class="flex name class">
 <span>class <span class="ident">ProjectileSimulator</span></span>
-<span>(</span><span>speed: float, launch_angle: float, gravity: float = 9.8)</span>
+<span>(</span><span>environment: <a title="environment.Environment" href="environment.html#environment.Environment">Environment</a>, projectile: <a title="projectile.Projectile" href="projectile.html#projectile.Projectile">Projectile</a>, speed: float, angle: float)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A class to simulate and visualize projectile motion.</p>
 <h2 id="attributes">Attributes</h2>
 <dl>
+<dt><strong><code>environment</code></strong> :&ensp;<code>Environment</code></dt>
+<dd>The type of environment for simulation.</dd>
+<dt><strong><code>projectile</code></strong> :&ensp;<code>Projectile</code></dt>
+<dd>The type of projectile for simulation.</dd>
 <dt><strong><code>speed</code></strong> :&ensp;<code>float</code></dt>
 <dd>The initial speed of the projectile (m/s).</dd>
-<dt><strong><code>launch_angle</code></strong> :&ensp;<code>float</code></dt>
+<dt><strong><code>angle</code></strong> :&ensp;<code>float</code></dt>
 <dd>The launch angle (degrees).</dd>
-<dt><strong><code>gravity</code></strong> :&ensp;<code>float</code></dt>
-<dd>The acceleration due to gravity (m/s^2).</dd>
 <dt><strong><code>angle_rad</code></strong> :&ensp;<code>float</code></dt>
 <dd>The launch angle (radians).</dd>
 <dt><strong><code>v0x</code></strong> :&ensp;<code>float</code></dt>
@@ -111,29 +124,35 @@ simulation runs without a graphical user interface (GUI).</p>
 <dd>The total flight time (s)</dd>
 <dt><strong><code>total_distance</code></strong> :&ensp;<code>float</code></dt>
 <dd>The total distance traveled (m)</dd>
+<dt><strong><code>max_height</code></strong> :&ensp;<code>float</code></dt>
+<dd>The maximum height achieved (m)</dd>
 <dt><strong><code>dist_at_max_height</code></strong> :&ensp;<code>float</code></dt>
-<dd>The x distance traveled when at the heightest point (m)</dd>
+<dd>The x distance traveled when at the highest point (m)</dd>
 <dt><strong><code>max_possible_dist</code></strong> :&ensp;<code>float</code></dt>
 <dd>The max possible distance traveled at speed given
 (launched at 45°) (m)</dd>
 <dt><strong><code>max_possible_height</code></strong> :&ensp;<code>float</code></dt>
 <dd>The max possible height reached at speed given
 (launched at 90°) (m)</dd>
+<dt><strong><code>max_possible_flight_time</code></strong> :&ensp;<code>float</code></dt>
+<dd>The max possible flight time at speed given
+(launched at 90°) (s)</dd>
 </dl>
 <h2 id="args">Args</h2>
 <dl>
+<dt><strong><code>environment</code></strong> :&ensp;<code>Environment</code></dt>
+<dd>The type of environment for simulation.</dd>
+<dt><strong><code>projectile</code></strong> :&ensp;<code>Projectile</code></dt>
+<dd>The type of projectile for simulation.</dd>
 <dt><strong><code>speed</code></strong> :&ensp;<code>float</code></dt>
-<dd>The initial speed of the projectile in m/s.</dd>
-<dt><strong><code>launch_angle</code></strong> :&ensp;<code>float</code></dt>
-<dd>The launch angle in degrees.</dd>
-<dt><strong><code>gravity</code></strong> :&ensp;<code>float</code>, optional</dt>
-<dd>The acceleration due to gravity in m/s^2. Defaults to 9.8.</dd>
+<dd>The initial speed of the projectile.</dd>
+<dt><strong><code>angle</code></strong> :&ensp;<code>float</code></dt>
+<dd>The angle of launch.</dd>
 </dl>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>ValueError</code></dt>
-<dd>If the launch angle is not greater than 0 and less than or
-equal to 90°.</dd>
+<dd>If the launch angle is not &gt; 0° and &lt;= 90°.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -144,60 +163,71 @@ equal to 90°.</dd>
     A class to simulate and visualize projectile motion.
 
     Attributes:
+        environment (Environment): The type of environment for simulation.
+        projectile (Projectile): The type of projectile for simulation.
         speed (float): The initial speed of the projectile (m/s).
-        launch_angle (float): The launch angle (degrees).
-        gravity (float): The acceleration due to gravity (m/s^2).
+        angle (float): The launch angle (degrees).
         angle_rad (float): The launch angle (radians).
         v0x (float): The velocity component in the x direction (m)
         v0y (float): The velocity component in the y direction (m)
         time_to_max_height (float): The time to reach the maximum height (s)
         total_flight_time (float): The total flight time (s)
         total_distance (float): The total distance traveled (m)
-        dist_at_max_height (float): The x distance traveled when at the heightest point (m)
+        max_height (float): The maximum height achieved (m)
+        dist_at_max_height (float): The x distance traveled when at the highest point (m)
         max_possible_dist (float): The max possible distance traveled at speed given
                                    (launched at 45°) (m)
         max_possible_height (float): The max possible height reached at speed given
                                      (launched at 90°) (m)
+        max_possible_flight_time (float): The max possible flight time at speed given
+                                          (launched at 90°) (s)
     &#34;&#34;&#34;
 
     # Flag to indicate whether the GUI should be disabled (True = no GUI)
     _no_gui: bool = False
 
-    def __init__(self, speed: float, launch_angle: float, gravity: float = 9.8):
+    def __init__(self,
+                 environment: Environment,
+                 projectile: Projectile,
+                 speed: float,
+                 angle: float):
         &#34;&#34;&#34;
         Args:
-            speed (float): The initial speed of the projectile in m/s.
-            launch_angle (float): The launch angle in degrees.
-            gravity (float, optional): The acceleration due to gravity in m/s^2. Defaults to 9.8.
+            environment (Environment): The type of environment for simulation.
+            projectile (Projectile): The type of projectile for simulation.
+            speed (float): The initial speed of the projectile.
+            angle (float): The angle of launch.
 
         Raises:
-            ValueError: If the launch angle is not greater than 0 and less than or 
-                        equal to 90°.
+            ValueError: If the launch angle is not &gt; 0° and &lt;= 90°.
         &#34;&#34;&#34;
+        self.environment: Environment = environment
+        self.projectile: Projectile = projectile
         self.speed: float = speed
-        self.launch_angle: float = launch_angle
-        self.gravity: float = gravity
+        self.angle: float = angle
 
-        if self.launch_angle &lt;= 0 or self.launch_angle &gt; 90:
-            raise ValueError(&#34;Launch angle must be &gt;0° and &lt;=90°.&#34;)
+        if self.angle &lt;= 0 or self.angle &gt; 90:
+            raise ValueError(&#34;Launch angle must be &gt; 0° and &lt;= 90°.&#34;)
 
         # Convert angle to radians for trigonometric calculations
-        self.angle_rad: float = math.radians(self.launch_angle)
+        self.angle_rad: float = math.radians(self.angle)
 
         # Calculate initial velocity components
         self.v0x: float = self.speed * math.cos(self.angle_rad)
         self.v0y: float = self.speed * math.sin(self.angle_rad)
 
-        # Calculate key trajectory parameters
-        self.time_to_max_height: float = self.v0y / self.gravity
-        self.total_flight_time: float = 2 * self.time_to_max_height
-        self.total_distance: float = self.v0x * self.total_flight_time
-        self.max_height: float = (self.v0y**2) / (2 * self.gravity)
-        self.dist_at_max_height: float = self.total_distance / 2
+        # Key trajectory parameters
+        self.time_to_max_height: float = 0
+        self.total_flight_time: float = 0
+        self.total_distance: float = 0
+        self.max_height: float = 0
+        self.dist_at_max_height: float = 0
 
-        # Calculate maximum possible distance and height (used for graph scaling)
-        self.max_possible_dist: float = (self.speed**2) / self.gravity
-        self.max_possible_height: float = (self.speed**2) / (2 * self.gravity)
+        # Calculate maximum possible distance, height, and flight time (used for graph scaling)
+        self.max_possible_dist: float = (self.speed**2) / self.environment.gravity
+        self.max_possible_height: float = (self.speed**2) / (2 * self.environment.gravity)
+        self.max_possible_flight_time: float = 2 * self.speed / self.environment.gravity
+
 
         # Initialize visualization attributes
         self._canvas: Optional[vp.canvas] = None
@@ -248,12 +278,21 @@ equal to 90°.</dd>
 
     def _setup_graph(self) -&gt; None:
         &#34;&#34;&#34;Set up the VPython graph for trajectory plotting.&#34;&#34;&#34;
+        # scaling factor to give some margins to x and y axis
+        scale_factor: float = 1.05
+
         self._graph = vp.graph(
-            title=f&#39;Projectile Motion (Speed: {self.speed} m/s, Angle: {
-                self.launch_angle}°, Gravity: {self.gravity} m/s²)&#39;,
+            title=&#39;&lt;i&gt;Projectile Motion Simulator&lt;/i&gt;\n&#39; +
+                  f&#39;Initial Speed: {self.speed:.1f} m/s,  Launch Angle: {self.angle:.1f}°\n&#39; +
+                  f&#39;Environment: {str(self.environment.type)} &#39; +
+                  f&#39;(Gravity: {self.environment.gravity:.3f} m/s²,  &#39; +
+                  f&#39;Air Density: {self.environment.air_density:.3f} kg/m³)\n&#39; +
+                  f&#39;Projectile: {str(self.projectile.type)} &#39; +
+                  f&#39;(Mass: {self.projectile.mass:.3f} kg,  &#39; +
+                  f&#39;Surface Area: {self.projectile.area:.3f} m²)&#39;,
             xtitle=&#39;Distance (m)&#39;, ytitle=&#39;Height (m)&#39;,
-            xmin=0, xmax=self.max_possible_dist,
-            ymin=0, ymax=self.max_possible_height,
+            xmin=0, xmax=self.max_possible_dist * scale_factor,
+            ymin=0, ymax=self.max_possible_height * scale_factor,
             width=800, height=400,
             align=&#39;right&#39;
         )
@@ -265,23 +304,44 @@ equal to 90°.</dd>
         assert self._canvas
 
         # Start labels 2 over from left margin (range -10 to 10)
-        left_margin: int = -self._canvas.range + 2
+        left_margin: int = -self._canvas.range + 1
 
         # Start lines at line number 5  (range 10 to -10)
         line_number: int = 5
 
         ### Create labels for various trajectory parameters  ###
         self._labels[&#39;max_possible_dist&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
-                                                     text=f&#39;Max Possible Distance @ 45°: {
-            self.max_possible_dist:.2f} m&#39;,
-            height=16, align=&#39;left&#39;, box=False)
+                                                     text=f&#39;Max Possible Distance (no air) @ 45°: {
+                                                     self.max_possible_dist:.3f} m&#39;,
+                                                     height=16, align=&#39;left&#39;, box=False)
 
         line_number -= 1
 
-        self._labels[&#39;max_possible_height&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
-                                                       text=f&#39;Max Possible Height @ 90°: {
-            self.max_possible_height:.2f} m&#39;,
-            height=16, align=&#39;left&#39;, box=False)
+        self._labels[&#39;max_possible_height_45&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
+                                                          text=f&#39;Max Possible Height (no air) @ 45°: {
+                                                          self.max_possible_height/2:.3f} m&#39;,
+                                                          height=16, align=&#39;left&#39;, box=False)
+
+        line_number -= 1
+
+        self._labels[&#39;max_possible_height_90&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
+                                                          text=f&#39;Max Possible Height (no air) @ 90°: {
+                                                          self.max_possible_height:.3f} m&#39;,
+                                                          height=16, align=&#39;left&#39;, box=False)
+
+        line_number -= 1
+
+        self._labels[&#39;max_possible_flight_time_45&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
+                                                               text=f&#39;Max Possible Flight Time (no air) @ 45°: {
+                                                               self.max_possible_flight_time/math.sqrt(2):.3f} s&#39;,
+                                                               height=16, align=&#39;left&#39;, box=False)
+
+        line_number -= 1
+
+        self._labels[&#39;max_possible_flight_time_90&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
+                                                               text=f&#39;Max Possible Flight Time (no air) @ 90°: {
+                                                               self.max_possible_flight_time:.3f} s&#39;,
+                                                               height=16, align=&#39;left&#39;, box=False)
 
         line_number -= 2
 
@@ -308,27 +368,109 @@ equal to 90°.</dd>
         self._labels[&#39;total_dist&#39;] = vp.label(pos=vp.vector(left_margin, line_number, 0),
                                               text=&#39;&#39;, height=16, align=&#39;left&#39;, box=False)
 
+    def _update_label(self, key: str, text: str) -&gt; None:
+        &#34;&#34;&#34;
+        Updates given label&#39;s text, if GUI is enabled
+
+        Args:
+            key (str): The key for the label dict entry.
+            text (str): The str to update the label with
+        &#34;&#34;&#34;
+        if ProjectileSimulator._no_gui is False:
+            self._labels[key].text = text
+
     def _calculate_dt_and_rate(self,
-                               flight_time: float,
-                               min_steps: int = 50,
-                               max_steps: int = 500,
-                               target_fps: int = 60) -&gt; Tuple[float, int]:
+                               min_steps: int = 100,
+                               max_steps: int = 1000,
+                               target_fps: int = 500) -&gt; Tuple[float, int]:
         &#34;&#34;&#34;
         Calculate the time step and frame rate for smooth simulation.
 
         Args:
-            flight_time (float): Total flight time of the projectile.
             min_steps (int): Minimum number of simulation steps.
             max_steps (int): Maximum number of simulation steps.
             target_fps (int): Target frames per second for visualization.
 
         Returns:
-            tuple: (dt, rate) where dt is the time step and rate is the frame rate.
+            Tuple[float, int]: The time step (dt) and frame rate (rate).
         &#34;&#34;&#34;
-        steps: int = min(max(min_steps, int(flight_time * target_fps)), max_steps)
-        dt: float = flight_time / steps
+        steps: int = min(max(min_steps, int(self.max_possible_flight_time * target_fps)), max_steps)
+        dt: float = self.max_possible_flight_time / steps
         rate: int = min(int(1 / dt), target_fps)
         return dt, rate
+
+    def _acceleration(self, vx: float, vy: float) -&gt; Tuple[float, float]:
+        &#34;&#34;&#34;
+        Calculates the acceleration in the x and y direction.
+
+        Args:
+            vx (float): x velocity
+            vy (float): y velocity
+
+        Returns:
+            Tuple[float, float]: The x-y components of acceleration.
+        &#34;&#34;&#34;
+        # Calculate speed
+        speed = math.sqrt(vx**2 + vy**2)
+
+        # Calculate drag force
+        drag_force = 0.5 * self.environment.air_density * speed**2 * DRAG_COEFFICIENT_SPHERE * self.projectile.area
+
+        # Calculate drag acceleration
+        if self.projectile.mass &gt; 0:
+            drag_acc = drag_force / self.projectile.mass
+        else:
+            drag_acc = 0
+
+        # Calculate x and y components of acceleration
+        ax = -drag_acc * vx / speed
+        ay = -self.environment.gravity - (drag_acc * vy / speed)
+
+        return ax, ay
+
+    def _velocity_verlet_update(self, x: float, y: float, vx: float, vy: float, dt: float) \
+                                -&gt; Tuple[float, float, float, float]:
+        &#34;&#34;&#34;
+        Uses the Velocity Verlet algorithm to update the x,y positions and velocities.
+
+        Args:
+            x (float): x position
+            y (float): y position
+            vx (float): x velocity
+            vy (float): y velocity
+            dt (float): time delta
+
+        Returns:
+            Tuple[float, float, float, float]: The updated x-y positions and velocities (x, y, vx, vy).
+        &#34;&#34;&#34;
+        # Half-step velocity update
+        ax, ay = self._acceleration(vx, vy)
+        vx_half = vx + 0.5 * ax * dt
+        vy_half = vy + 0.5 * ay * dt
+
+        # Full position update
+        x_new = x + vx_half * dt
+        y_new = y + vy_half * dt
+
+        # Recalculate acceleration at new position
+        ax_new, ay_new = self._acceleration(vx_half, vy_half)
+
+        # Full velocity update
+        vx_new = vx + 0.5 * (ax + ax_new) * dt
+        vy_new = vy + 0.5 * (ay + ay_new) * dt
+
+        return x_new, y_new, vx_new, vy_new
+
+    def _plot_points(self, x: float, y: float) -&gt; None:
+        &#34;&#34;&#34;
+        Plots the x and y points on the curve if GUI is active
+
+        Args:
+            x (float): x coordinate
+            y (float): y coordinate
+        &#34;&#34;&#34;
+        if self._curve:
+            self._curve.plot(x, y)
 
     def run_simulation(self) -&gt; None:
         &#34;&#34;&#34;
@@ -342,64 +484,82 @@ equal to 90°.</dd>
             self._setup_graph()
             self._create_labels()
 
-            t: float = 0
-            dt, rate = self._calculate_dt_and_rate(self.total_flight_time)
-            y_prev: float = 0
-            max_height_reached: bool = False
+        t: float = 0
+        x: float = 0
+        y: float = 0
+        vx: float = self.v0x
+        vy: float = self.v0y
+        dt, rate = self._calculate_dt_and_rate()
+        x_prev: float = 0
+        y_prev: float = 0
+        max_height_reached: bool = False
 
-            while t &lt;= self.total_flight_time:
+        # While y is above the x-axis
+        while y &gt;= 0:
+            if ProjectileSimulator._no_gui is False:
                 vp.rate(rate)
 
-                # Calculate current position
-                x: float = self.v0x * t
-                y: float = self.v0y * t - 0.5 * self.gravity * t**2
+            # Plot position
+            self._plot_points(x, y)
 
-                assert self._curve
+            # Update flight time label
+            self._update_label(&#39;flight_time&#39;, f&#39;Flight Time: {t:.3f} s&#39;)
 
-                # Plot new position
-                self._curve.plot(x, y)
-
-                # Update flight time label
-                self._labels[&#39;flight_time&#39;].text = f&#39;Flight Time: {t:.2f} s&#39;
-
-                # Check if max height is reached and update labels accordingly
-                if y &gt;= y_prev and not max_height_reached:
-                    self._labels[&#39;height&#39;].text = f&#39;Height: {y:.2f} m&#39;
+            # Check if max height is reached and update labels accordingly
+            if max_height_reached is False:
+                if y &gt;= y_prev:
+                    self._update_label(&#39;height&#39;, f&#39;Height: {y:.3f} m&#39;)
                 else:
                     max_height_reached = True
-                    self._labels[&#39;height&#39;].text = f&#39;Max Height: {
-                        self.max_height:.2f} m&#39;
-                    self._labels[&#39;time_to_max_height&#39;].text = \
-                        f&#39;Time to Max Height: {self.time_to_max_height:.2f} s&#39;
-                    self._labels[&#39;dist_at_max_height&#39;].text = \
-                        f&#39;Distance at Max Height: {self.dist_at_max_height:.2f} m&#39;
+                    self.max_height = y_prev
+                    self.time_to_max_height = t - dt
+                    self.dist_at_max_height = x_prev
+                    self._update_label(&#39;height&#39;, f&#39;Max Height: {self.max_height:.3f} m&#39;)
+                    self._update_label(&#39;time_to_max_height&#39;, f&#39;Time to Max Height: {self.time_to_max_height:.3f} s&#39;)
+                    self._update_label(&#39;dist_at_max_height&#39;, f&#39;Distance at Max Height: {self.dist_at_max_height:.3f} m&#39;)
 
-                # Store current y
-                y_prev = y
+            # Store current x and y
+            x_prev = x
+            y_prev = y
 
-                # Update time
-                t += dt
+            # Update position and velocity
+            x, y, vx, vy = self._velocity_verlet_update(x, y, vx, vy, dt)
 
-            assert self._curve
+            # Update time
+            t += dt
 
-            # Plot final point and update final labels
-            self._curve.plot(self.total_distance, 0)
-            self._labels[&#39;flight_time&#39;].text = f&#39;Total Flight Time: {
-                self.total_flight_time:.2f} s&#39;
-            self._labels[&#39;total_dist&#39;].text = f&#39;Total Distance: {
-                self.total_distance:.2f} m&#39;
-        # Else, no GUI so simulation doesn&#39;t run.  Just print results
-        else:
+        # Set final values to last know values before y crossed x-axis
+        self.total_distance = x_prev
+        self.total_flight_time = t - dt
+
+        # Update final labels
+        self._update_label(&#39;flight_time&#39;, f&#39;Total Flight Time: {self.total_flight_time:.3f} s&#39;)
+        self._update_label(&#39;total_dist&#39;, f&#39;Total Distance: {self.total_distance:.3f} m&#39;)
+
+        # Print results if no GUI
+        if ProjectileSimulator._no_gui is True:
             print()
-            print(f&#39;Max possible distance @ 45°: {self.max_possible_dist:.2f} m&#39;)
-            print(f&#39;Max possible height @ 90°: {self.max_possible_height:.2f} m&#39;)
+            print(&#39;Input Parameters:&#39;)
+            print(f&#39;  Initial Speed: {self.speed:.1f} m/s, Launch Angle: {self.angle:.1f}°&#39;)
+            print(f&#39;  Environment: {str(self.environment.type)}&#39;, end=&#39; &#39;)
+            print(f&#39;(Gravity: {self.environment.gravity:.3f} m/s²,&#39;, end=&#39; &#39;)
+            print(f&#39;Air Density: {self.environment.air_density:.3f} kg/m³)&#39;)
+            print(f&#39;  Projectile: {str(self.projectile.type)}&#39;, end=&#39; &#39;)
+            print(f&#39;(Mass: {self.projectile.mass:.3f} kg,&#39;, end=&#39; &#39;)
+            print(f&#39;Surface Area: {self.projectile.area:.3f} m²)&#39;)
             print()
-            print(f&#39;Max height: {self.max_height:.2f} m&#39;)
-            print(f&#39;Time to max height: {self.time_to_max_height:.2f} s&#39;)
-            print(f&#39;Distance at max height: {self.dist_at_max_height:.2f} m&#39;)
+            print(f&#39;Max possible distance @ 45°: {self.max_possible_dist:.3f} m&#39;)
+            print(f&#39;Max possible height @ 45°: {self.max_possible_height/2:.3f} m&#39;)
+            print(f&#39;Max possible height @ 90°: {self.max_possible_height:.3f} m&#39;)
+            print(f&#39;Max possible flight time @ 45°: {self.max_possible_flight_time/math.sqrt(2):.3f} s&#39;)
+            print(f&#39;Max possible flight time @ 90°: {self.max_possible_flight_time:.3f} s&#39;)
             print()
-            print(f&#39;Total flight time: {self.total_flight_time:.2f} s&#39;)
-            print(f&#39;Total distance: {self.total_distance:.2f} m&#39;)
+            print(f&#39;Max height: {self.max_height:.3f} m&#39;)
+            print(f&#39;Time to max height: {self.time_to_max_height:.3f} s&#39;)
+            print(f&#39;Distance at max height: {self.dist_at_max_height:.3f} m&#39;)
+            print()
+            print(f&#39;Total flight time: {self.total_flight_time:.3f} s&#39;)
+            print(f&#39;Total distance: {self.total_distance:.3f} m&#39;)
             print()</code></pre>
 </details>
 <h3>Static methods</h3>

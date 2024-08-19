@@ -5,121 +5,18 @@ the trajectory of a projectile given initial conditions.
 """
 
 import argparse
-from enum import Enum, auto
-from dataclasses import dataclass, field
 import math
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple, Optional
 import readchar
 import vpython as vp
+from environment import Environment, EnvironmentType, ENVIRONMENTS
+from projectile import Projectile, ProjectileType, PROJECTILES
 
 __author__ = "Jim Tooker"
 
 
 # Constants
 DRAG_COEFFICIENT_SPHERE = 0.47
-N_DIGITS = 6   # num of digits to round floats for display
-
-
-class EnvironmentType(Enum):
-    EARTH = auto()
-    EARTH_NO_AIR = auto()
-    MARS = auto()
-    MOON = auto()
-    VENUS = auto()
-    JUPITER = auto()
-    CUSTOM = auto()
-
-    def __str__(self):
-        return self.name.replace('_', ' ').title()
-
-
-@dataclass
-class Environment:
-    """
-    Dataclass to hold the Environment information.
-
-    Attributes:
-        type (EnvironmentType): The type of the environment.
-        gravity (float): The gravity of the environment (m/s^2).
-        air_density (float): The air density of the environment (kg/m^3).
-        display_name (str): Formatted name of the environment.
-    """
-    type: EnvironmentType
-    gravity: float   # m/s^2
-    air_density: float  # kg/m^3
-    display_name: str = field(init=False)
-
-    def __post_init__(self):
-        self.display_name = f'{str(self.type):<15}'
-
-    @classmethod
-    def create_dict(cls) -> Dict[EnvironmentType, 'Environment']:
-        """
-        Creates a Dict of the "canned" environments available.
-        """
-        environments: List[Environment] = [
-            cls(type=EnvironmentType.EARTH, gravity=9.81, air_density=1.225),
-            cls(type=EnvironmentType.EARTH_NO_AIR, gravity=9.81, air_density=0),
-            cls(type=EnvironmentType.MARS, gravity=3.72, air_density=0.02),
-            cls(type=EnvironmentType.MOON, gravity=1.62, air_density=0),
-            cls(type=EnvironmentType.VENUS, gravity=8.87, air_density=65),
-            cls(type=EnvironmentType.JUPITER, gravity=24.79, air_density=0.16),
-        ]
-        return {env.type: env for env in environments}
-
-ENVIRONMENTS = Environment.create_dict()
-
-
-class ProjectileType(Enum):
-    GOLF_BALL = auto()
-    PING_PONG_BALL = auto()
-    TENNIS_BALL = auto()
-    BASEBALL = auto()
-    BOWLING_BALL = auto()
-    SHOT_PUT = auto()
-    CUSTOM = auto()
-
-    def __str__(self):
-        return self.name.replace('_', ' ').title()
-
-@dataclass
-class Projectile:
-    """
-    Dataclass to hold the Projectile information.
-
-    Attributes:
-        type (ProjectileType): The type of the projectile.
-        mass (float): The mass of the projectile (kg).
-        radius (float): The radius of the projectile (m).
-        area (float): The area of the projectile (m^2).
-        display_name (str): Formatted name of the projectile.
-    """
-    type: ProjectileType
-    mass: float  # kg
-    radius: float  # m
-    area: float = field(init=False)  # m^2
-    display_name: str = field(init=False)
-
-    def __post_init__(self):
-        self.display_name = f'{str(self.type):<15}'
-        self.area = math.pi * self.radius**2
-
-    @classmethod
-    def create_dict(cls) -> Dict[ProjectileType, 'Projectile']:
-        """
-        Creates a Dict of the "canned" projectiles available.
-        """
-        projectiles: List[Projectile] = [
-            cls(type=ProjectileType.GOLF_BALL, mass=0.046, radius=0.0213),
-            cls(type=ProjectileType.PING_PONG_BALL, mass=0.0027, radius=0.02),
-            cls(type=ProjectileType.TENNIS_BALL, mass=0.058, radius=0.0337),
-            cls(type=ProjectileType.BASEBALL, mass=0.145, radius=0.0373),
-            cls(type=ProjectileType.BOWLING_BALL, mass=6, radius=0.108),
-            cls(type=ProjectileType.SHOT_PUT, mass=7.26, radius=0.0625),
-        ]
-        return {proj.type: proj for proj in projectiles}
-
-PROJECTILES = Projectile.create_dict()
 
 
 class ProjectileSimulator:
@@ -475,9 +372,9 @@ class ProjectileSimulator:
                     self._update_label('height', f'Height: {y:.3f} m')
                 else:
                     max_height_reached = True
-                    self.max_height = round(y_prev, N_DIGITS)
+                    self.max_height = y_prev
                     self.time_to_max_height = t - dt
-                    self.dist_at_max_height = round(x_prev, N_DIGITS)
+                    self.dist_at_max_height = x_prev
                     self._update_label('height', f'Max Height: {self.max_height:.3f} m')
                     self._update_label('time_to_max_height', f'Time to Max Height: {self.time_to_max_height:.3f} s')
                     self._update_label('dist_at_max_height', f'Distance at Max Height: {self.dist_at_max_height:.3f} m')
@@ -493,7 +390,7 @@ class ProjectileSimulator:
             t += dt
 
         # Set final values to last know values before y crossed x-axis
-        self.total_distance = round(x_prev, N_DIGITS)
+        self.total_distance = x_prev
         self.total_flight_time = t - dt
 
         # Update final labels
@@ -542,9 +439,12 @@ def main() -> None:
 
     * Prompts:  
         - If not using predefined test parameters, the user is prompted to enter:  
+            - The Environment (choose from canned Environments, or Custom)  
+                * If a Custom Environment is chosen, enter the gravity (m/s²) and air density (kg/m³)  
+            - The Projectile (choose from canned Projectiles, or Custom)  
+                * If a Custom Projectile is chosen, enter the mass (kg) and radius (m)  
             - The initial speed of the projectile (m/s)  
             - The angle of launch (degrees)  
-            - Optional: The value of gravity (m/s^2) Defaults to 9.8
 
     * What it does:  
         - Runs the simulation, optionally displaying it in a VPython GUI window.  
