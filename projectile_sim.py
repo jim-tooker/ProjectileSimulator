@@ -1,7 +1,8 @@
 """
 This module simulates projectile motion using VPython for visualization.
 It provides a ProjectileSimulator class that calculates and displays
-the trajectory of a projectile given initial conditions.
+the trajectory of a projectile in different environments and for different
+projectile types.
 """
 
 import argparse
