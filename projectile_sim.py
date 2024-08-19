@@ -95,6 +95,7 @@ class ProjectileSimulator:
         self._canvas: Optional[vp.canvas] = None
         self._graph: Optional[vp.graph] = None
         self._curve: Optional[vp.gcurve] = None
+        self._ideal_curve: Optional[vp.gcurve] = None
         self._labels: Dict[str, vp.label] = {}
 
     def __del__(self) -> None:
@@ -140,9 +141,10 @@ class ProjectileSimulator:
 
     def _setup_graph(self) -> None:
         """Set up the VPython graph for trajectory plotting."""
-        # scaling factor to give some margins to x and y axis
+        # Scaling factor to give some margins to x and y axis
         scale_factor: float = 1.05
 
+        # Setup graph
         self._graph = vp.graph(
             title='<i>Projectile Motion Simulator</i>\n' +
                   f'Initial Speed: {self.speed:.1f} m/s,  Launch Angle: {self.angle:.1f}°\n' +
@@ -158,8 +160,16 @@ class ProjectileSimulator:
             width=800, height=400,
             align='right'
         )
-        self._curve = vp.gcurve(color=vp.color.red, dot=True,
-                            dot_radius=5, dot_color=vp.color.blue)
+
+        # Curve for data plot
+        self._curve = vp.gcurve(color=vp.color.red, dot=True, dot_radius=5, dot_color=vp.color.blue)
+
+        # Ideal curve
+        self._ideal_curve = vp.gcurve(color=vp.color.green, dot=True, dot_radius=5, dot_color=vp.color.blue)
+
+        # Add legend text
+        self._curve.label = 'Actual'
+        self._ideal_curve.label = 'Ideal (45°, No air)'
 
     def _create_labels(self) -> None:
         """Create labels for displaying simulation information."""
@@ -334,6 +344,17 @@ class ProjectileSimulator:
         if self._curve:
             self._curve.plot(x, y)
 
+    def _plot_ideal_points(self, x: float, y: float) -> None:
+        """
+        Plots the x and y points on the ideal curve if GUI is active
+
+        Args:
+            x (float): x coordinate
+            y (float): y coordinate
+        """
+        if self._ideal_curve:
+            self._ideal_curve.plot(x, y)
+
     def run_simulation(self) -> None:
         """
         Run the projectile motion simulation and visualize the results.
@@ -349,8 +370,12 @@ class ProjectileSimulator:
         t: float = 0
         x: float = 0
         y: float = 0
+        ideal_x: float = 0
+        ideal_y: float = 0
         vx: float = self.v0x
         vy: float = self.v0y
+        ideal_vx: float = self.speed / math.sqrt(2)
+        ideal_vy: float = self.speed / math.sqrt(2)
         dt, rate = self._calculate_dt_and_rate()
         x_prev: float = 0
         y_prev: float = 0
@@ -363,6 +388,13 @@ class ProjectileSimulator:
 
             # Plot position
             self._plot_points(x, y)
+
+            # Plot ideal position
+            self._plot_ideal_points(ideal_x, ideal_y)
+
+            # Update ideal points
+            ideal_x = ideal_vx * t
+            ideal_y = (ideal_vy * t) - (0.5 * self.environment.gravity * t**2)
 
             # Update flight time label
             self._update_label('flight_time', f'Flight Time: {t:.3f} s')
@@ -393,6 +425,21 @@ class ProjectileSimulator:
         # Set final values to last know values before y crossed x-axis
         self.total_distance = x_prev
         self.total_flight_time = t - dt
+
+        # Continue to complete ideal curve plot if more time needed
+        while ideal_y >= 0:
+            if ProjectileSimulator._no_gui is False:
+                vp.rate(rate)
+
+            # Plot ideal position
+            self._plot_ideal_points(ideal_x, ideal_y)
+
+            # Update ideal points
+            ideal_x = ideal_vx * t
+            ideal_y = (ideal_vy * t) - (0.5 * self.environment.gravity * t**2)
+
+            # Update time
+            t += dt
 
         # Update final labels
         self._update_label('flight_time', f'Total Flight Time: {self.total_flight_time:.3f} s')
