@@ -6,8 +6,11 @@ projectile types.
 """
 
 import argparse
+from copy import copy
 import math
-from typing import Dict, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from enum import IntEnum
 import readchar
 import vpython as vp
 from environment import Environment, EnvironmentType, ENVIRONMENTS
@@ -18,6 +21,47 @@ __author__ = "Jim Tooker"
 
 # Constants
 DRAG_COEFFICIENT_SPHERE = 0.47
+
+
+class GraphType(IntEnum):
+    """
+    Enum to hold the different type of graphs.
+    """
+    DIST_HEIGHT = 0
+    """Distance vs. Height Graph"""
+    TIME_HEIGHT = 1
+    """Time vs. Height Graph"""
+    TIME_DIST = 2
+    """Time vs. Distance Graph"""
+
+class CurveType(IntEnum):
+    """
+    Enum to hold the different type of curves.
+    """
+    ACTUAL = 0
+    """Curve of actual data with all parameters applied"""
+    NO_AIR = 1
+    """Curve of data with no air resistance"""
+    NO_AIR_45 = 2
+    """Curve of ideal curve at 45° and no air resistance"""
+    NO_AIR_90 = 3
+    """Curve of ideal curve at 90° and no air resistance"""
+
+@dataclass
+class Graph:
+    """
+    Data class to hold Graph information.  Every graph has a list of curves.
+    """
+    graph: vp.graph
+    curves: List[vp.gcurve]
+
+@dataclass
+class Trajectory:
+    """
+    Data class to store trajectory information (Position (x, y), Velocity (vx, vy))
+    """
+    pos: vp.vector
+    vel: vp.vector
 
 
 class ProjectileSimulator:
@@ -91,13 +135,23 @@ class ProjectileSimulator:
         self.max_possible_flight_time: float = 2 * self.speed / self.environment.gravity
 
 
-        # Initialize visualization attributes
+        ### Initialize visualization attributes  ###
+
+        # Canvas for text
         self._canvas: Optional[vp.canvas] = None
-        self._graph: Optional[vp.graph] = None
-        self._curve: Optional[vp.gcurve] = None
-        self._curve_no_air45: Optional[vp.gcurve] = None
-        self._curve_no_air90: Optional[vp.gcurve] = None
-        self._curve_no_air: Optional[vp.gcurve] = None
+
+        # We will have 3 graphs (if GUI enabled):
+        #   Distance (x) vs. Height (y)
+        #   Time (x) vs. Height (y)
+        #   Time (x) vs. Distance (y)
+        # We will have 4 types of curves on each graph (if GUI enabled):
+        #   Actual data
+        #   Data at given angle with no air resistance
+        #   Data at 45° with no air resistance
+        #   Data at 90° with no air resistance
+        self._graphs: List[Graph] = []
+
+        # Labels for canvas
         self._labels: Dict[str, vp.label] = {}
 
     def __del__(self) -> None:
@@ -109,9 +163,9 @@ class ProjectileSimulator:
                 self._canvas.delete()
                 self._canvas = None
 
-            if self._graph:
-                self._graph.delete()
-                self._graph = None
+            if self._graphs:
+                for graph in self._graphs:
+                    graph.graph.delete()
         except Exception:
             pass
 
@@ -138,16 +192,67 @@ class ProjectileSimulator:
         """Set up the VPython canvas for 3D visualization."""
         self._canvas = vp.canvas(width=400, height=400, align='left')
 
+        # Create blank label so this canvas will show first
+        vp.label(text='', box=False)
+
         # Range of canvas labels will be -10 to 10
         self._canvas.range = 10
+
+    def _create_graph_spacer(self) -> None:
+        """
+        Create an invisible/empty graph for spacing (VPython doesn't
+        separate the graphs decently by itself, so this is a workaround).
+        """
+        spacing_graph = vp.graph(width=1600,
+                                 height=20,
+                                 align='right',
+                                 foreground=vp.color.gray(0.95),
+                                 background=vp.color.gray(0.95))
+        
+        # Has to have a curve
+        spacing_curve = vp.gcurve(graph=spacing_graph)
+
+        # Plot a point so graph shows up
+        spacing_curve.plot(0,0)
+
+    def _create_canvas_spacer(self) -> None:
+        """
+        Create blank canvas for spacer between canvas and 1st graph (VPython workaround)
+        """
+        vp.canvas(width=20, height=400, align='left', background=vp.color.gray(0.95))
+
+        # We need to create a label for canvas to show up
+        vp.label(text='', box=False)
+
+        # Reselect the "real" canvas, so this one won't be used
+        # (by default VPyhon uses the last canvas created)
+        assert self._canvas
+        self._canvas.select()
+
+    def _add_graph_legend(self, curves: List[vp.gcurve]) -> None:
+        """
+        Adds a legend to the specified curves.
+
+        Args:
+            curves (List[vp.gcurve]): A list of curves to add a legend to.
+        """
+        curves[CurveType.ACTUAL].label = f'{self.angle:.1f}°, Actual'
+        curves[CurveType.NO_AIR].label = f'{self.angle:.1f}°, No air'
+        curves[CurveType.NO_AIR_45].label = '45°, No air'
+        curves[CurveType.NO_AIR_90].label = '90°, No air'
 
     def _setup_graph(self) -> None:
         """Set up the VPython graph for trajectory plotting."""
         # Scaling factor to give some margins to x and y axis
         scale_factor: float = 1.05
+        graph_width: int = 800
+        graph_height: int = 400
 
-        # Setup graph
-        self._graph = vp.graph(
+        # Create a space between the canvas and the 1st graph
+        self._create_canvas_spacer()
+
+        # Setup main graph
+        main_graph = vp.graph(
             title='<i>Projectile Motion Simulator</i>\n' +
                   f'Initial Speed: {self.speed:.1f} m/s,  Launch Angle: {self.angle:.1f}°\n' +
                   f'Environment: {str(self.environment.type)} ' +
@@ -159,27 +264,85 @@ class ProjectileSimulator:
             xtitle='Distance (m)', ytitle='Height (m)',
             xmin=0, xmax=self.max_possible_dist * scale_factor,
             ymin=0, ymax=self.max_possible_height * scale_factor,
-            width=800, height=400,
-            align='right'
+            width=graph_width, height=graph_height,
+            align='left'
         )
 
+        # The size of the dot at the end of the curves
+        dot_radius: int = 3
+
+        # Create list of main graph curves
+        main_curves: List[vp.gcurve] = []
+
         # Curve for data plot
-        self._curve = vp.gcurve(color=vp.color.red, width=5, dot=True, dot_radius=5, dot_color=vp.color.blue)
+        main_curves.append(vp.gcurve(color=vp.color.red, dot=True, dot_radius=dot_radius, dot_color=vp.color.red))
 
-        # Ideal curve at 45°, no air
-        self._curve_no_air45 = vp.gcurve(color=vp.color.green, dot=True, dot_radius=5, dot_color=vp.color.blue)
-
-        # Ideal curve at 90°, no air
-        self._curve_no_air90 = vp.gcurve(color=vp.color.magenta, dot=True, dot_radius=5, dot_color=vp.color.blue)
+        # Plot a point to make it the first graph (first graph to plot a point becomes the first graph in VPython)
+        main_curves[CurveType.ACTUAL].plot(0,0)
 
         # Ideal curve at given angle, no air
-        self._curve_no_air = vp.gcurve(color=vp.color.orange, dot=True, dot_radius=5, dot_color=vp.color.blue)
+        main_curves.append(vp.gcurve(color=vp.color.orange, dot=True, dot_radius=dot_radius, dot_color=vp.color.orange))
+
+        # Ideal curve at 45°, no air
+        main_curves.append(vp.gcurve(color=vp.color.blue, dot=True, dot_radius=dot_radius, dot_color=vp.color.blue))
+
+        # Ideal curve at 90°, no air
+        main_curves.append(vp.gcurve(color=vp.color.magenta, dot=True, dot_radius=dot_radius, dot_color=vp.color.magenta))
 
         # Add legend text
-        self._curve.label = 'Actual'
-        self._curve_no_air45.label = '45°, No air'
-        self._curve_no_air90.label = '90°, No air'
-        self._curve_no_air.label = f'{self.angle:.1f}°, No air'
+        self._add_graph_legend(main_curves)
+
+        # Add Graph and curves to Distance vs. Height graph
+        self._graphs.append(Graph(main_graph, main_curves))
+
+        # Insert a graph spacer
+        self._create_graph_spacer()
+
+        # Create list of Time vs. Height graph curves
+        th_curves: List[vp.gcurve] = []
+
+        # Time vs. Height graph
+        th_graph = vp.graph(
+            title='Time vs. Height',
+            xtitle='Time (s)', ytitle='Height (m)',
+            width=graph_width, height=graph_height,
+            align='left',
+            xmin=0, xmax=self.max_possible_flight_time * scale_factor,
+            ymin=0, ymax=self.max_possible_height * scale_factor,
+        )
+        th_curves.append(vp.gcurve(color=vp.color.red, dot=True, dot_radius=dot_radius, dot_color=vp.color.red))
+        th_curves.append(vp.gcurve(color=vp.color.orange, dot=True, dot_radius=dot_radius, dot_color=vp.color.orange))
+        th_curves.append(vp.gcurve(color=vp.color.blue, dot=True, dot_radius=dot_radius, dot_color=vp.color.blue))
+        th_curves.append(vp.gcurve(color=vp.color.magenta, dot=True, dot_radius=dot_radius, dot_color=vp.color.magenta))
+
+        # Add legend text
+        self._add_graph_legend(th_curves)
+
+        # Add Graph and curves to Time vs. Height graph
+        self._graphs.append(Graph(th_graph, th_curves))
+
+        # Create list of Time vs. Distance graph curves
+        td_curves: List[vp.gcurve] = []
+
+        # Time vs. Distance graph
+        td_graph = vp.graph(
+            title='Time vs. Distance',
+            xtitle='Time (s)', ytitle='Distance (m)',
+            width=graph_width, height=graph_height,
+            align='right',
+            xmin=0, xmax=self.max_possible_flight_time * scale_factor,
+            ymin=0, ymax=self.max_possible_dist * scale_factor,
+        )
+        td_curves.append(vp.gcurve(color=vp.color.red, dot=True, dot_radius=dot_radius, dot_color=vp.color.red))
+        td_curves.append(vp.gcurve(color=vp.color.orange, dot=True, dot_radius=dot_radius, dot_color=vp.color.orange))
+        td_curves.append(vp.gcurve(color=vp.color.blue, dot=True, dot_radius=dot_radius, dot_color=vp.color.blue))
+        td_curves.append(vp.gcurve(color=vp.color.magenta, dot=True, dot_radius=dot_radius, dot_color=vp.color.magenta))
+
+        # Add legend text
+        self._add_graph_legend(td_curves)
+
+        # Add Graph and curves to Time vs. Distance graph
+        self._graphs.append(Graph(td_graph, td_curves))
 
     def _create_labels(self) -> None:
         """Create labels for displaying simulation information."""
@@ -310,40 +473,31 @@ class ProjectileSimulator:
 
         return ax, ay
 
-    def _velocity_verlet_update(self, x: float, y: float, vx: float, vy: float, dt: float) \
-                                -> Tuple[float, float, float, float]:
+    def _velocity_verlet_update(self, traj: Trajectory, dt: float) -> None:
         """
         Uses the Velocity Verlet algorithm to update the x,y positions and velocities.
 
         Args:
-            x (float): x position
-            y (float): y position
-            vx (float): x velocity
-            vy (float): y velocity
-            dt (float): time delta
-
-        Returns:
-            Tuple[float, float, float, float]: The updated x-y positions and velocities (x, y, vx, vy).
+            traj (Trajectory): The current trajectory of the object (x, y, vx, vy)
+            dt (float): Time delta since last update
         """
         # Half-step velocity update
-        ax, ay = self._acceleration(vx, vy)
-        vx_half = vx + 0.5 * ax * dt
-        vy_half = vy + 0.5 * ay * dt
+        ax, ay = self._acceleration(traj.vel.x, traj.vel.y)
+        vx_half = traj.vel.x + 0.5 * ax * dt
+        vy_half = traj.vel.y + 0.5 * ay * dt
 
         # Full position update
-        x_new = x + vx_half * dt
-        y_new = y + vy_half * dt
+        traj.pos.x = traj.pos.x + vx_half * dt
+        traj.pos.y = traj.pos.y + vy_half * dt
 
         # Recalculate acceleration at new position
         ax_new, ay_new = self._acceleration(vx_half, vy_half)
 
         # Full velocity update
-        vx_new = vx + 0.5 * (ax + ax_new) * dt
-        vy_new = vy + 0.5 * (ay + ay_new) * dt
+        traj.vel.x = traj.vel.x + 0.5 * (ax + ax_new) * dt
+        traj.vel.y = traj.vel.y + 0.5 * (ay + ay_new) * dt
 
-        return x_new, y_new, vx_new, vy_new
-
-    def _plot_points(self, x: float, y: float) -> None:
+    def _plot_points(self, curve: Optional[vp.gcurve], x: float, y: float) -> None:
         """
         Plots the x and y points on the curve, if GUI is active
 
@@ -351,41 +505,39 @@ class ProjectileSimulator:
             x (float): x coordinate
             y (float): y coordinate
         """
-        if self._curve:
-            self._curve.plot(x, y)
+        if curve:
+            curve.plot(x, y)
 
-    def _plot_no_air45_points(self, x: float, y: float) -> None:
+    def _plot_point_on_each_graph(self, curve: CurveType, pos: vp.vector, t: float) -> None:
         """
-        Plots the x and y points on the 45°, no air curve, if GUI is active
-
-        Args:
-            x (float): x coordinate
-            y (float): y coordinate
-        """
-        if self._curve_no_air45:
-            self._curve_no_air45.plot(x, y)
-
-    def _plot_no_air90_points(self, x: float, y: float) -> None:
-        """
-        Plots the x and y points on the 90°, no air curve, if GUI is active.
+        Plots the point on the curve specified on all graphs.
 
         Args:
-            x (float): x coordinate
-            y (float): y coordinate
+            curve (CurveType): The curve to plot the data on
+            pos (vp.vector): x-y position
+            t (float): time
         """
-        if self._curve_no_air90:
-            self._curve_no_air90.plot(x, y)
+        self._plot_points(self._graphs[GraphType.DIST_HEIGHT].curves[curve], pos.x, pos.y)
+        self._plot_points(self._graphs[GraphType.TIME_HEIGHT].curves[curve], t, pos.y)
+        self._plot_points(self._graphs[GraphType.TIME_DIST].curves[curve], t, pos.x)
 
-    def _plot_no_air_points(self, x: float, y: float) -> None:
+    def _plot_and_update_ideals(self, trajectories: List[Trajectory], t: float) -> None:
         """
-        Plots the x and y points on the no air curve, if GUI is active.
+        Plots the x, y points on all the graphs for all the ideal curves (no air resistance), then updates the
+        ideal x,y positions.
 
         Args:
-            x (float): x coordinate
-            y (float): y coordinate
+            trajectories (List[Trajectory]):  The trajectory data for all the ideal curves
+            t (float): time
         """
-        if self._curve_no_air:
-            self._curve_no_air.plot(x, y)
+        for i, _ in enumerate(self._graphs, 1):
+            if trajectories[i].pos.y >= 0:
+                # Plot points
+                self._plot_point_on_each_graph(CurveType(i), trajectories[i].pos, t)
+
+                # Update x and y
+                trajectories[i].pos.x = trajectories[i].vel.x * t
+                trajectories[i].pos.y = (trajectories[i].vel.y * t) - (0.5 * self.environment.gravity * t**2)
 
     def run_simulation(self) -> None:
         """
@@ -400,121 +552,86 @@ class ProjectileSimulator:
             self._create_labels()
 
         t: float = 0
-
-        x: float = 0
-        y: float = 0
-        no_air45x: float = 0
-        no_air45y: float = 0
-        no_air90x: float = 0
-        no_air90y: float = 0
-        no_air_x: float = 0
-        no_air_y: float = 0
-
-        vx: float = self.v0x
-        vy: float = self.v0y
-        no_air45vx: float = self.speed / math.sqrt(2)
-        no_air45vy: float = self.speed / math.sqrt(2)
-        no_air90vx: float = 0
-        no_air90vy: float = self.speed
-        no_air_vx: float = self.v0x
-        no_air_vy: float = self.v0y
-
+        dt: float
+        rate: float
         dt, rate = self._calculate_dt_and_rate()
-        x_prev: float = 0
-        y_prev: float = 0
+        pos_prev: vp.vector = vp.vector(0, 0, 0)
         max_height_reached: bool = False
+        speed_at_45: float = self.speed / math.sqrt(2)
 
-        # While y is above the x-axis
-        while y >= 0:
+        ## Set initial trajectories for each curve type ##
+        trajectories: List[Trajectory] = []
+
+        # Both actual and "actual with no air" start with the initial velocity given (broken into their x-y components)
+        trajectories.append(Trajectory(pos=vp.vector(0,0,0), vel=vp.vector(self.v0x, self.v0y, 0)))
+        trajectories.append(Trajectory(pos=vp.vector(0,0,0), vel=vp.vector(self.v0x, self.v0y, 0)))
+
+        # At 45°, both x and y velocities are the same
+        trajectories.append(Trajectory(pos=vp.vector(0,0,0), vel=vp.vector(speed_at_45, speed_at_45, 0)))
+
+        # At 90°, x velocity component is 0, and y is the full speed given
+        trajectories.append(Trajectory(pos=vp.vector(0,0,0), vel=vp.vector(0, self.speed, 0)))
+
+        # While y is above the x-axis for the actual curve
+        while trajectories[CurveType.ACTUAL].pos.y >= 0:
             if ProjectileSimulator._no_gui is False:
                 vp.rate(rate)
 
-            # Plot 45° ideal, no air angle points
-            self._plot_no_air45_points(no_air45x, no_air45y)
+                # Plot all the ideal values on all the graphs
+                self._plot_and_update_ideals(trajectories, t)
 
-            # Update 45° ideal, no air angle points
-            no_air45x = no_air45vx * t
-            no_air45y = (no_air45vy * t) - (0.5 * self.environment.gravity * t**2)
+                # Plot actual x,y position on all the graphs
+                self._plot_point_on_each_graph(CurveType.ACTUAL, trajectories[CurveType.ACTUAL].pos, t)
 
-            # Plot 90° ideal, no air angle points
-            self._plot_no_air90_points(no_air90x, no_air90y)
-
-            # Update 90° ideal, no air angle points
-            no_air90x = no_air90vx * t
-            no_air90y = (no_air90vy * t) - (0.5 * self.environment.gravity * t**2)
-
-            # Plot ideal, no air angle points
-            self._plot_no_air_points(no_air_x, no_air_y)
-
-            # Update ideal, no air angle points
-            no_air_x = no_air_vx * t
-            no_air_y = (no_air_vy * t) - (0.5 * self.environment.gravity * t**2)
-
-            # Plot actual x,y position
-            self._plot_points(x, y)
-
-            # Update flight time label
-            self._update_label('flight_time', f'Flight Time: {t:.3f} s')
+                # Update flight time label
+                self._update_label('flight_time', f'Flight Time: {t:.3f} s')
 
             # Check if max height is reached and update labels accordingly
             if max_height_reached is False:
-                if y >= y_prev:
-                    self._update_label('height', f'Height: {y:.3f} m')
+                if trajectories[CurveType.ACTUAL].pos.y >= pos_prev.y:
+                    self._update_label('height', f'Height: {trajectories[CurveType.ACTUAL].pos.y:.3f} m')
                 else:
                     max_height_reached = True
-                    self.max_height = y_prev
+                    self.max_height = pos_prev.y
                     self.time_to_max_height = t - dt
-                    self.dist_at_max_height = x_prev
+                    self.dist_at_max_height = pos_prev.x
                     self._update_label('height', f'Max Height: {self.max_height:.3f} m')
                     self._update_label('time_to_max_height', f'Time to Max Height: {self.time_to_max_height:.3f} s')
                     self._update_label('dist_at_max_height', f'Distance at Max Height: {self.dist_at_max_height:.3f} m')
 
             # Store current x and y
-            x_prev = x
-            y_prev = y
+            pos_prev = copy(trajectories[CurveType.ACTUAL].pos)
 
             # Update actual x,y position and velocity
-            x, y, vx, vy = self._velocity_verlet_update(x, y, vx, vy, dt)
+            self._velocity_verlet_update(trajectories[CurveType.ACTUAL], dt)
 
             # Update time
             t += dt
 
         # Set final values to last know values before y crossed x-axis
-        self.total_distance = x_prev
+        self.total_distance = pos_prev.x
         self.total_flight_time = t - dt
 
-        # Continue to complete ideal curve plots if they are in progress still
-        while no_air45y >= 0 or no_air_y >= 0 or no_air90y >= 0:
-            if ProjectileSimulator._no_gui is False:
+        # If GUI active
+        if ProjectileSimulator._no_gui is False:
+            # Update final labels
+            self._update_label('flight_time', f'Total Flight Time: {self.total_flight_time:.3f} s')
+            self._update_label('total_dist', f'Total Distance: {self.total_distance:.3f} m')
+
+            # Continue to complete ideal curve plots if they are in progress still
+            while trajectories[CurveType.NO_AIR].pos.y >= 0 or \
+                  trajectories[CurveType.NO_AIR_45].pos.y >= 0 or \
+                  trajectories[CurveType.NO_AIR_90].pos.y >= 0:
+
                 vp.rate(rate)
 
-            # Plot ideal, no air 45° position
-            if no_air45y >= 0:
-                self._plot_no_air45_points(no_air45x, no_air45y)
-                no_air45x = no_air45vx * t
-                no_air45y = (no_air45vy * t) - (0.5 * self.environment.gravity * t**2)
+                # Plot all the ideal values on all the graphs
+                self._plot_and_update_ideals(trajectories, t)
 
-            # Plot ideal, no air 90° position
-            if no_air90y >= 0:
-                self._plot_no_air90_points(no_air90x, no_air90y)
-                no_air90x = no_air90vx * t
-                no_air90y = (no_air90vy * t) - (0.5 * self.environment.gravity * t**2)
-
-            # Plot ideal, no air, actual angle position
-            if no_air_y >= 0:
-                self._plot_no_air_points(no_air_x, no_air_y)
-                no_air_x = no_air_vx * t
-                no_air_y = (no_air_vy * t) - (0.5 * self.environment.gravity * t**2)
-
-            # Update time
-            t += dt
-
-        # Update final labels
-        self._update_label('flight_time', f'Total Flight Time: {self.total_flight_time:.3f} s')
-        self._update_label('total_dist', f'Total Distance: {self.total_distance:.3f} m')
-
-        # Print results if no GUI
-        if ProjectileSimulator._no_gui is True:
+                # Update time
+                t += dt
+        # Else, print results if no GUI
+        else:
             print()
             print('Input Parameters:')
             print(f'  Initial Speed: {self.speed:.1f} m/s, Launch Angle: {self.angle:.1f}°')
