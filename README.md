@@ -1,5 +1,5 @@
 # Projectile Simulator
-### (Package `projectilesim`)
+(Package `projectilesim`)
 
 This package simulates projectile motion using VPython for visualization. It calculates and displays the trajectory of a projectile in different environments and for different projectile types.
 
@@ -10,3 +10,6 @@ This package simulates projectile motion using VPython for visualization. It cal
 
 ## Documentation
 For detailed API documentation, see [API Documentation](https://jim-tooker.github.io/projectilesim/docs/projectile_sim.html).
+
+## Sample Screen shot
+![projectilesim-screen](https://github.com/user-attachments/assets/9afad9a7-7216-4db0-9f0b-a66f79789f41)
