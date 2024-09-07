@@ -1,7 +1,7 @@
 [project]
-    name = "ballcollide"
+    name = "projectilesim"
     version = "0.1.0"
-    description = "Simulates the elastic, inelastic, or partially elastic collisions between two balls."
+    description = "Simulates projectile motion in different gravities and air densities."
     authors = [{name = "Jim Tooker", email = "none@me.com"}]
     readme = "README.md"
     requires-python = ">=3.10"
@@ -11,7 +11,7 @@
     ]
 
 [project.urls]
-    "Homepage" = "https://github.com/jim-tooker/ballcollide"
+    "Homepage" = "https://github.com/jim-tooker/projectilesim"
 
 [project.optional-dependencies]
 dev = [
