@@ -1,9 +1,12 @@
 """
 Test harness for ProjectileSimulator
 """
+import sys
 from dataclasses import dataclass
 from typing import Union
 import pytest
+
+sys.path.append('.')
 from projectile_sim import  ProjectileSimulator
 from environment import Environment, EnvironmentType, ENVIRONMENTS
 from projectile import Projectile, ProjectileType, PROJECTILES
@@ -50,10 +53,10 @@ class CustomInputs:
 
 class TestProjectileSimulator:
     """
-    Class for pytest testing.
+    Class for `pytest` testing of Projectile Simulator.
     """
     ProjectileSimulator.disable_gui(True)
-    toler = 0.001
+    tolerance = 0.001
 
     @staticmethod
     def generate_test_id(inputs: Union[CannedInputs, CustomInputs]) -> str:
@@ -78,14 +81,14 @@ class TestProjectileSimulator:
         """
         Checks results of ProjectileSimulator run.
         """
-        assert sim.max_possible_dist == pytest.approx(expected.max_possible_dist, abs=self.toler)
-        assert sim.max_possible_height == pytest.approx(expected.max_possible_height, abs=self.toler)
-        assert sim.max_possible_flight_time == pytest.approx(expected.max_possible_flight_time, abs=self.toler)
-        assert sim.max_height == pytest.approx(expected.max_height, abs=self.toler)
-        assert sim.time_to_max_height == pytest.approx(expected.time_to_max_height, abs=self.toler)
-        assert sim.dist_at_max_height == pytest.approx(expected.dist_at_max_height, abs=self.toler)
-        assert sim.total_flight_time == pytest.approx(expected.total_flight_time, abs=self.toler)
-        assert sim.total_distance == pytest.approx(expected.total_distance, abs=self.toler)
+        assert sim.max_possible_dist == pytest.approx(expected.max_possible_dist, abs=self.tolerance)
+        assert sim.max_possible_height == pytest.approx(expected.max_possible_height, abs=self.tolerance)
+        assert sim.max_possible_flight_time == pytest.approx(expected.max_possible_flight_time, abs=self.tolerance)
+        assert sim.max_height == pytest.approx(expected.max_height, abs=self.tolerance)
+        assert sim.time_to_max_height == pytest.approx(expected.time_to_max_height, abs=self.tolerance)
+        assert sim.dist_at_max_height == pytest.approx(expected.dist_at_max_height, abs=self.tolerance)
+        assert sim.total_flight_time == pytest.approx(expected.total_flight_time, abs=self.tolerance)
+        assert sim.total_distance == pytest.approx(expected.total_distance, abs=self.tolerance)
 
 
     @pytest.mark.parametrize('inputs, expected', [

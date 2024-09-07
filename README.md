@@ -11,5 +11,5 @@ This package simulates projectile motion using VPython for visualization. It cal
 ## Documentation
 For detailed API documentation, see [API Documentation](https://jim-tooker.github.io/projectilesim/docs/projectile_sim.html).
 
-## Sample Screen shot
+## Sample Screenshot
 ![projectilesim-screen](https://github.com/user-attachments/assets/9afad9a7-7216-4db0-9f0b-a66f79789f41)

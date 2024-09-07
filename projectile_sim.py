@@ -158,16 +158,13 @@ class ProjectileSimulator:
         """
         Clean up VPython objects when the simulator is deleted.
         """
-        try:
-            if self._canvas:
-                self._canvas.delete()
-                self._canvas = None
+        if hasattr(self, '_canvas') and self._canvas:
+            self._canvas.delete()
+            self._canvas = None
 
-            if self._graphs:
-                for graph in self._graphs:
-                    graph.graph.delete()
-        except Exception:
-            pass
+        if hasattr(self, '_graphs') and self._graphs:
+            for graph in self._graphs:
+                graph.graph.delete()
 
     @staticmethod
     def quit_simulation() -> None:
@@ -348,7 +345,7 @@ class ProjectileSimulator:
         """Create labels for displaying simulation information."""
         assert self._canvas
 
-        # Start labels 2 over from left margin (range -10 to 10)
+        # Start labels 1 over from left margin (range -10 to 10)
         left_margin: int = -self._canvas.range + 1
 
         # Start lines at line number 5  (range 10 to -10)

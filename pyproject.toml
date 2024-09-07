@@ -1,0 +1,21 @@
+[project]
+    name = "ballcollide"
+    version = "0.1.0"
+    description = "Simulates the elastic, inelastic, or partially elastic collisions between two balls."
+    authors = [{name = "Jim Tooker", email = "none@me.com"}]
+    readme = "README.md"
+    requires-python = ">=3.10"
+    dependencies = [
+        "readchar",
+        "vpython",
+    ]
+
+[project.urls]
+    "Homepage" = "https://github.com/jim-tooker/ballcollide"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "mypy",
+    "pdoc",
+]
