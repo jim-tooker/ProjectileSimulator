@@ -205,7 +205,7 @@ class ProjectileSimulator:
                                  align='right',
                                  foreground=vp.color.gray(0.95),
                                  background=vp.color.gray(0.95))
-        
+
         # Has to have a curve
         spacing_curve = vp.gcurve(graph=spacing_graph)
 
